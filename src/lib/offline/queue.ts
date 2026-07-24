@@ -1,42 +1,101 @@
-// STUB — file d'attente hors-ligne (FR-25/26/27, cf. SSD UC-08 et UC-08bis)
+"use client";
+
+// File d'attente hors-ligne (FR-25/26/27, cf. SSD UC-08).
 //
-// À implémenter (phase "Mode hors-ligne & PWA" du plan de réalisation) :
-//   - Détection de connexion (window.addEventListener('online'/'offline'))
-//   - Stockage local des actions en attente (IndexedDB, ex. via idb-keyval)
-//   - Une vente créée hors-ligne obtient un id_local (uuid) + libellé
-//     provisoire "FACT-EN ATTENTE-xxxx" (JAMAIS un numero_facture définitif,
-//     cf. FR-27bis et SSD UC-10 — le serveur seul attribue le numéro final)
-//   - Au retour réseau : rejouer les actions en attente dans l'ordre,
-//     gérer le cas de conflit de stock (cf. SSD UC-08bis) en marquant la
-//     vente concernée "en conflit" plutôt qu'en forçant un stock négatif
-//   - Exposer un hook React (ex. useSyncStatus()) consommé par <SyncBar />
-//     pour piloter le bandeau de synchronisation de la maquette.
+// Implémentation MVP : les ventes créées hors-ligne sont stockées dans
+// IndexedDB (via idb-keyval) avec un id_local (uuid) et un numéro
+// d'affichage provisoire "FACT-EN ATTENTE-xxxx" (jamais un numéro définitif
+// — cf. FR-27bis / SSD UC-10, seul le serveur attribue le numéro final).
+//
+// Au retour réseau, flushQueue() rejoue les ventes dans l'ordre de création.
+// Ce qui N'EST PAS encore couvert (à faire en phase suivante) :
+//   - Résolution de conflit de stock (SSD UC-08bis) : si le stock serveur est
+//     devenu insuffisant entre-temps, l'insert échoue et la vente reste dans
+//     la file en erreur plutôt que d'être marquée "en conflit" en base —
+//     il faut la RPC dédiée `synchroniser_ventes_en_attente` mentionnée dans
+//     schema.sql pour aller plus loin.
+//   - Paiements/remboursements/approvisionnements hors-ligne (le type
+//     PendingAction les prévoit, mais seul le flux "vente" est câblé ici).
 
-export interface PendingAction {
-  id: string; // id local (uuid), généré côté client
-  type: "vente" | "paiement" | "remboursement" | "approvisionnement";
-  payload: unknown;
+import { get, set, del, keys } from "idb-keyval";
+
+const PREFIX = "lime:pending:";
+
+export interface LigneVenteOffline {
+  article_id: string;
+  quantite: number;
+  prix_unitaire: number;
+}
+
+export interface PaiementOffline {
+  mode: "especes" | "mobile_money" | "virement" | "credit";
+  montant: number;
+}
+
+export interface VenteOffline {
+  id: string; // id local (uuid)
+  type: "vente";
+  client_id: string | null;
+  lignes: LigneVenteOffline[];
+  paiements: PaiementOffline[];
   createdAt: string;
+  numeroProvisoire: string; // "FACT-EN ATTENTE-xxxx"
 }
 
-export async function queueAction(_action: PendingAction): Promise<void> {
-  throw new Error("TODO: queueAction — à implémenter avec IndexedDB (phase hors-ligne)");
+function numeroProvisoire(): string {
+  return `FACT-EN ATTENTE-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
-export async function getPendingActions(): Promise<PendingAction[]> {
-  return [];
+export function estEnLigne(): boolean {
+  if (typeof navigator === "undefined") return true;
+  return navigator.onLine;
 }
 
-export async function flushQueue(): Promise<void> {
-  // IMPORTANT (cf. supabase/schema.sql, fn_ventes_lignes_stock, BR-08/UC-08bis) :
-  // avant de rejouer les ventes en attente ici, positionner explicitement le
-  // paramètre de session Postgres app.sync_mode à 'true' pour CETTE requête
-  // uniquement — jamais en dehors de ce contexte de réconciliation, sinon
-  // FR-08 (blocage strict en temps réel) ne s'appliquerait plus normalement.
-  // Exemple (via une fonction RPC dédiée, pas directement depuis le client) :
-  //   await supabase.rpc('synchroniser_ventes_en_attente', { ventes: [...] })
-  //   -- côté SQL : set local app.sync_mode = 'true'; puis les inserts.
-  // Sans RPC, chaque insert doit passer par une Route Handler serveur qui
-  // exécute `set local app.sync_mode = 'true';` dans la même transaction.
-  throw new Error("TODO: flushQueue — envoi séquentiel au serveur au retour réseau");
+export async function mettreEnFileVente(
+  input: Omit<VenteOffline, "id" | "type" | "createdAt" | "numeroProvisoire">
+): Promise<VenteOffline> {
+  const action: VenteOffline = {
+    ...input,
+    id: crypto.randomUUID(),
+    type: "vente",
+    createdAt: new Date().toISOString(),
+    numeroProvisoire: numeroProvisoire(),
+  };
+  await set(PREFIX + action.id, action);
+  return action;
+}
+
+export async function getVentesEnAttente(): Promise<VenteOffline[]> {
+  const all = await keys();
+  const nosClefs = all.filter((k) => typeof k === "string" && k.startsWith(PREFIX));
+  const actions = await Promise.all(nosClefs.map((k) => get(k as string)));
+  return (actions.filter(Boolean) as VenteOffline[]).sort((a, b) =>
+    a.createdAt.localeCompare(b.createdAt)
+  );
+}
+
+export async function retirerDeLaFile(id: string): Promise<void> {
+  await del(PREFIX + id);
+}
+
+/**
+ * Rejoue les ventes en attente vers Supabase, dans l'ordre de création.
+ * S'arrête à la première erreur (ex. perte de connexion en cours de route)
+ * pour ne pas désynchroniser l'ordre — sera relancé au prochain retour réseau.
+ */
+export async function flushQueue(
+  envoyerVente: (v: VenteOffline) => Promise<{ ok: boolean; erreur?: string }>
+): Promise<{ envoyees: number; restantes: number }> {
+  const enAttente = await getVentesEnAttente();
+  let envoyees = 0;
+
+  for (const vente of enAttente) {
+    const resultat = await envoyerVente(vente);
+    if (!resultat.ok) break;
+    await retirerDeLaFile(vente.id);
+    envoyees++;
+  }
+
+  const restantes = (await getVentesEnAttente()).length;
+  return { envoyees, restantes };
 }

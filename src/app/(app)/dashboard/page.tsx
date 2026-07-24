@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { Wallet, AlertTriangle, PackageX, AlertOctagon, type LucideIcon } from "lucide-react";
+import VentesChart from "./VentesChart";
 
 const SEUIL_STOCK_FAIBLE = 5; // FR-28
 
@@ -8,55 +10,95 @@ export default async function DashboardPage() {
   const debutJournee = new Date();
   debutJournee.setHours(0, 0, 0, 0);
 
-  const [{ data: ventesJour }, { data: creances }, { data: stockFaible }, { data: ventesEnConflit }] = await Promise.all([
-    supabase
-      .from("ventes")
-      .select("montant_total")
-      .gte("date", debutJournee.toISOString()),
-    supabase.from("vue_creances_clients").select("*"),
-    supabase
-      .from("articles")
-      .select("code_article, nom, quantite_stock")
-      .lt("quantite_stock", SEUIL_STOCK_FAIBLE)
-      .eq("actif", true),
-    supabase
-      .from("ventes")
-      .select("numero_facture, date, montant_total")
-      .eq("conflit_sync", true),
-  ]);
+  const sept_jours = new Date();
+  sept_jours.setDate(sept_jours.getDate() - 6);
+  sept_jours.setHours(0, 0, 0, 0);
+
+  const [{ data: ventesJour }, { data: creances }, { data: stockFaible }, { data: ventesEnConflit }, { data: ventes7j }] =
+    await Promise.all([
+      supabase.from("ventes").select("montant_total").gte("date", debutJournee.toISOString()),
+      supabase.from("vue_creances_clients").select("*"),
+      supabase
+        .from("articles")
+        .select("code_article, nom, quantite_stock")
+        .lt("quantite_stock", SEUIL_STOCK_FAIBLE)
+        .eq("actif", true),
+      supabase
+        .from("ventes")
+        .select("numero_facture, date, montant_total")
+        .eq("conflit_sync", true),
+      supabase
+        .from("ventes")
+        .select("date, montant_total")
+        .gte("date", sept_jours.toISOString())
+        .neq("statut", "annulee"),
+    ]);
 
   const totalVentesJour = (ventesJour ?? []).reduce((s, v) => s + Number(v.montant_total), 0);
   const totalCreances = (creances ?? []).reduce((s, c: any) => s + Number(c.solde_du), 0);
 
+  // FR-29 : agrégation par jour (libellé court fr-FR) pour les 7 derniers jours
+  const jours: { jour: string; total: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const cle = d.toLocaleDateString("fr-FR", { weekday: "short" });
+    const totalJour = (ventes7j ?? [])
+      .filter((v) => new Date(v.date).toDateString() === d.toDateString())
+      .reduce((s, v) => s + Number(v.montant_total), 0);
+    jours.push({ jour: cle, total: totalJour });
+  }
+
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold text-accent">Tableau de bord</h1>
+      <h1 className="text-lg font-display font-semibold text-ink">Tableau de bord</h1>
 
-      <div className="grid grid-cols-3 gap-4">
-        <Kpi label="Ventes du jour" value={`${totalVentesJour.toLocaleString("fr-FR")} FCFA`} sub={`${ventesJour?.length ?? 0} vente(s)`} />
-        <Kpi label="Créances en cours" value={`${totalCreances.toLocaleString("fr-FR")} FCFA`} sub={`${creances?.length ?? 0} client(s)`} />
-        <Kpi label="Articles en stock faible" value={`${stockFaible?.length ?? 0}`} sub={`< ${SEUIL_STOCK_FAIBLE} unités`} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Kpi
+          icon={Wallet}
+          label="Ventes du jour"
+          value={`${totalVentesJour.toLocaleString("fr-FR")} FCFA`}
+          sub={`${ventesJour?.length ?? 0} vente(s)`}
+          tone="lime"
+        />
+        <Kpi
+          icon={AlertTriangle}
+          label="Créances en cours"
+          value={`${totalCreances.toLocaleString("fr-FR")} FCFA`}
+          sub={`${creances?.length ?? 0} client(s)`}
+          tone={totalCreances > 0 ? "ember" : "neutral"}
+        />
+        <Kpi
+          icon={PackageX}
+          label="Articles en stock faible"
+          value={`${stockFaible?.length ?? 0}`}
+          sub={`< ${SEUIL_STOCK_FAIBLE} unités`}
+          tone={stockFaible && stockFaible.length > 0 ? "ember" : "neutral"}
+        />
       </div>
 
+      <VentesChart data={jours} />
+
       {ventesEnConflit && ventesEnConflit.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded p-4">
-          <h2 className="text-sm font-semibold mb-2 text-orange-700">
-            ⚠ {ventesEnConflit.length} vente(s) en conflit de synchronisation (BR-08)
+        <div className="bg-signal/5 border border-signal/20 rounded-lg p-4">
+          <h2 className="flex items-center gap-1.5 text-sm font-display font-semibold mb-2 text-signal">
+            <AlertOctagon size={15} />
+            {ventesEnConflit.length} vente(s) en conflit de synchronisation (BR-08)
           </h2>
-          <p className="text-xs text-orange-600 mb-2">
+          <p className="text-xs text-signal/80 mb-2">
             Stock devenu insuffisant entre l&apos;enregistrement hors-ligne et la synchronisation —
             arbitrage manuel requis (cf. Caisse → Ventes récentes).
           </p>
           <table className="w-full text-xs">
-            <thead className="text-orange-400 text-left">
+            <thead className="text-signal/60 text-left">
               <tr><th className="py-1">Facture</th><th>Date</th><th>Montant</th></tr>
             </thead>
             <tbody>
               {ventesEnConflit.map((v) => (
-                <tr key={v.numero_facture} className="border-t border-orange-100">
+                <tr key={v.numero_facture} className="border-t border-signal/10">
                   <td className="py-1">{v.numero_facture}</td>
                   <td>{new Date(v.date).toLocaleString("fr-FR")}</td>
-                  <td>{Number(v.montant_total).toLocaleString("fr-FR")} FCFA</td>
+                  <td className="num">{Number(v.montant_total).toLocaleString("fr-FR")} FCFA</td>
                 </tr>
               ))}
             </tbody>
@@ -65,36 +107,55 @@ export default async function DashboardPage() {
       )}
 
       {stockFaible && stockFaible.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <h2 className="text-sm font-semibold mb-2">Articles en stock faible</h2>
+        <div className="bg-white border border-ink/10 rounded-lg p-4">
+          <h2 className="text-sm font-display font-semibold mb-2">Articles en stock faible</h2>
           <table className="w-full text-xs">
-            <thead className="text-gray-400 text-left">
+            <thead className="text-ink/40 text-left">
               <tr><th className="py-1">Code</th><th>Nom</th><th>Stock</th></tr>
             </thead>
             <tbody>
               {stockFaible.map((a) => (
-                <tr key={a.code_article} className="border-t border-gray-100">
+                <tr key={a.code_article} className="border-t border-ink/5">
                   <td className="py-1">{a.code_article}</td>
                   <td>{a.nom}</td>
-                  <td>{a.quantite_stock}</td>
+                  <td className="num text-ember font-semibold">{a.quantite_stock}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-
-      {/* TODO FR-29 : graphique évolution des ventes 7 derniers jours (ex. avec recharts) */}
     </div>
   );
 }
 
-function Kpi({ label, value, sub }: { label: string; value: string; sub: string }) {
+function Kpi({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  sub: string;
+  tone: "lime" | "ember" | "neutral";
+}) {
+  const toneClasses = {
+    lime: "bg-lime/15 text-lime-deep",
+    ember: "bg-ember/15 text-ember",
+    neutral: "bg-ink/5 text-ink/40",
+  }[tone];
+
   return (
-    <div className="bg-white border border-gray-200 rounded p-4">
-      <div className="text-[10px] uppercase tracking-wide text-gray-400">{label}</div>
-      <div className="text-lg font-semibold">{value}</div>
-      <div className="text-xs text-gray-400">{sub}</div>
+    <div className="bg-white border border-ink/10 rounded-lg p-4 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-150">
+      <div className={`w-8 h-8 rounded-md flex items-center justify-center mb-2.5 ${toneClasses}`}>
+        <Icon size={16} />
+      </div>
+      <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold">{label}</div>
+      <div className="text-lg font-display font-semibold num">{value}</div>
+      <div className="text-xs text-ink/40">{sub}</div>
     </div>
   );
 }

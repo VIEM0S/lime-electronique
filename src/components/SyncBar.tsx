@@ -1,29 +1,43 @@
 "use client";
 
-// Bandeau de synchronisation (FR-27, NFR-02) — cf. maquette.
-// Pour l'instant affichage statique ; à brancher sur src/lib/offline/queue.ts
-// (getPendingActions) une fois la file d'attente hors-ligne implémentée.
-import { useState } from "react";
+// Bandeau de synchronisation (FR-27, NFR-02) — branché sur useSyncStatus,
+// lui-même adossé à la vraie file d'attente IndexedDB (src/lib/offline/queue.ts).
+import { CloudOff, RefreshCw, CloudCheck } from "lucide-react";
+import { useSyncStatus } from "@/lib/offline/useSyncStatus";
 
 export default function SyncBar() {
-  const [pending, setPending] = useState(0); // TODO: brancher sur la vraie file d'attente
+  const { enLigne, pending, synchronisation, synchroniser } = useSyncStatus();
 
-  if (pending === 0) {
+  if (!enLigne) {
     return (
-      <div className="flex items-center gap-2 bg-gray-200 text-gray-600 text-xs px-6 py-1.5">
-        <span className="w-2 h-2 rounded-full bg-green-600 inline-block" />
+      <div className="flex items-center gap-2 bg-signal/10 text-signal text-xs px-6 py-1.5 border-b border-signal/20">
+        <CloudOff size={13} />
+        Hors-ligne — les ventes sont enregistrées localement et seront synchronisées au retour du réseau
+        {pending > 0 && <span className="ml-1 num font-semibold">({pending} en attente)</span>}
+      </div>
+    );
+  }
+
+  if (pending === 0 && !synchronisation) {
+    return (
+      <div className="flex items-center gap-2 bg-ok/10 text-ok text-xs px-6 py-1.5 border-b border-ok/20">
+        <CloudCheck size={13} />
         Toutes les données sont synchronisées
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 bg-amber-50 text-amber-800 text-xs px-6 py-1.5">
-      <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
-      {pending} élément(s) en attente de synchronisation
-      <button className="ml-auto underline" onClick={() => setPending(0)}>
-        simuler la sync
-      </button>
+    <div className="flex items-center gap-2 bg-ember/10 text-ember text-xs px-6 py-1.5 border-b border-ember/20">
+      <RefreshCw size={13} className={synchronisation ? "animate-spin" : ""} />
+      {synchronisation
+        ? "Synchronisation en cours..."
+        : `${pending} vente(s) en attente de synchronisation`}
+      {!synchronisation && (
+        <button onClick={synchroniser} className="ml-auto underline hover:no-underline font-medium">
+          synchroniser maintenant
+        </button>
+      )}
     </div>
   );
 }

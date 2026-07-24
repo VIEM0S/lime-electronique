@@ -34,8 +34,8 @@ export default async function CaissePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-accent">Caisse — Nouvelle vente</h1>
-        <p className="text-xs text-gray-400 italic">Comptoir ou vente à distance (FR-09 à FR-14)</p>
+        <h1 className="text-lg font-display font-semibold text-ink">Caisse — Nouvelle vente</h1>
+        <p className="text-xs text-ink/40 italic">Comptoir ou vente à distance (FR-09 à FR-14)</p>
       </div>
       <CaisseForm articles={articles ?? []} clients={clients ?? []} />
 

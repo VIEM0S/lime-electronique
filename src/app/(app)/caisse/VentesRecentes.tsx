@@ -15,10 +15,10 @@ type VenteLite = {
 };
 
 const BADGE: Record<StatutVente, string> = {
-  payee: "bg-green-100 text-green-700",
-  partielle: "bg-amber-100 text-amber-700",
-  impayee: "bg-gray-200 text-gray-600",
-  annulee: "bg-red-100 text-red-700",
+  payee: "bg-ok/10 text-ok",
+  partielle: "bg-ember/10 text-ember",
+  impayee: "bg-ink/10 text-ink/50",
+  annulee: "bg-signal/10 text-signal",
 };
 
 export default function VentesRecentes({ ventes, peutAnnuler }: { ventes: VenteLite[]; peutAnnuler: boolean }) {
@@ -28,8 +28,6 @@ export default function VentesRecentes({ ventes, peutAnnuler }: { ventes: VenteL
   const [motif, setMotif] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
 
-  // FR-30/UC-09 : réservé au propriétaire — la policy RLS "proprietaire_annule_ventes"
-  // refuserait de toute façon l'update pour un compte "caisse".
   async function confirmerAnnulation(venteId: string) {
     if (!motif.trim()) {
       setErreur("Le motif d'annulation est obligatoire.");
@@ -57,22 +55,25 @@ export default function VentesRecentes({ ventes, peutAnnuler }: { ventes: VenteL
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded p-4">
-      <h2 className="text-sm font-semibold mb-2">Ventes récentes</h2>
+    <div className="bg-white border border-ink/10 rounded-lg p-4">
+      <h2 className="text-sm font-display font-semibold mb-2">Ventes récentes</h2>
       <table className="w-full text-xs">
-        <thead className="text-gray-400 text-left">
+        <thead className="text-ink/40 text-left">
           <tr><th className="py-1">Facture</th><th>Date</th><th>Montant</th><th>Statut</th><th></th></tr>
         </thead>
         <tbody>
+          {ventes.length === 0 && (
+            <tr><td colSpan={5} className="py-3 text-center text-ink/30 italic">Aucune vente récente</td></tr>
+          )}
           {ventes.map((v) => (
-            <tr key={v.id} className="border-t border-gray-100">
-              <td className="py-1">{v.numero_facture}</td>
-              <td>{new Date(v.date).toLocaleString("fr-FR")}</td>
-              <td>{Number(v.montant_total).toLocaleString("fr-FR")} FCFA</td>
+            <tr key={v.id} className="border-t border-ink/5">
+              <td className="py-1.5 num">{v.numero_facture}</td>
+              <td className="text-ink/50">{new Date(v.date).toLocaleString("fr-FR")}</td>
+              <td className="num">{Number(v.montant_total).toLocaleString("fr-FR")} FCFA</td>
               <td className="space-x-1">
                 <span className={`text-[10px] px-2 py-0.5 rounded-full ${BADGE[v.statut]}`}>{v.statut}</span>
                 {v.conflit_sync && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-signal/10 text-signal">
                     en conflit
                   </span>
                 )}
@@ -85,17 +86,17 @@ export default function VentesRecentes({ ventes, peutAnnuler }: { ventes: VenteL
                         value={motif}
                         onChange={(e) => setMotif(e.target.value)}
                         placeholder="Motif d'annulation"
-                        className="border border-gray-300 rounded px-1 py-0.5 text-xs w-32"
+                        className="border border-ink/15 rounded px-1.5 py-0.5 text-xs w-32"
                       />
-                      <button onClick={() => confirmerAnnulation(v.id)} className="text-red-600 underline">
+                      <button onClick={() => confirmerAnnulation(v.id)} className="text-signal underline text-[11px]">
                         Confirmer
                       </button>
-                      <button onClick={() => setVenteEnCours(null)} className="text-gray-400 underline">
+                      <button onClick={() => setVenteEnCours(null)} className="text-ink/30 underline text-[11px]">
                         Annuler
                       </button>
                     </div>
                   ) : (
-                    <button onClick={() => setVenteEnCours(v.id)} className="text-accent underline">
+                    <button onClick={() => setVenteEnCours(v.id)} className="text-lime-deep hover:text-ink underline text-[11px]">
                       Annuler
                     </button>
                   )
@@ -105,7 +106,7 @@ export default function VentesRecentes({ ventes, peutAnnuler }: { ventes: VenteL
           ))}
         </tbody>
       </table>
-      {erreur && <p className="text-xs text-red-600 mt-2">{erreur}</p>}
+      {erreur && <p className="text-xs text-signal mt-2">{erreur}</p>}
     </div>
   );
 }

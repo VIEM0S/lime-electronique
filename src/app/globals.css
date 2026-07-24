@@ -3,5 +3,45 @@
 @tailwind utilities;
 
 body {
-  @apply bg-gray-100 text-gray-900;
+  @apply bg-paper text-ink font-sans antialiased;
+}
+
+/* Tous les chiffres (montants, quantités) en mono tabulaire — l'app se lit
+   comme un ticket de caisse : c'est la signature visuelle du produit. */
+.num {
+  @apply font-mono tabular-nums;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
+/* Respect du focus clavier partout, y compris sur les cartes/boutons custom */
+:focus-visible {
+  outline: 2px solid theme("colors.lime.deep");
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Styles d'impression pour l'aperçu de facture (fenêtre "Télécharger PDF") */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #zone-impression, #zone-impression * {
+    visibility: visible;
+  }
+  #zone-impression {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
 }
