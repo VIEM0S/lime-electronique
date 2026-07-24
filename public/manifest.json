@@ -1,0 +1,9 @@
+{
+  "name": "Lime-électronique — Gestion",
+  "short_name": "Lime-électronique",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#2F4858",
+  "icons": []
+}
