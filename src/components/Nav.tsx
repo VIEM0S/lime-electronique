@@ -10,6 +10,8 @@ import {
   Users,
   Truck,
   UserCog,
+  CreditCard,
+  BarChart3,
 } from "lucide-react";
 import type { Role } from "@/types/database.types";
 
@@ -19,7 +21,9 @@ const ALL_LINKS = [
   { href: "/session-caisse", label: "Session de caisse", icon: Wallet, roles: ["proprietaire", "caisse"] as Role[] },
   { href: "/catalogue", label: "Catalogue", icon: Package, roles: ["proprietaire"] as Role[] },
   { href: "/clients", label: "Clients & créances", icon: Users, roles: ["proprietaire"] as Role[] },
+  { href: "/credits", label: "Crédits", icon: CreditCard, roles: ["proprietaire"] as Role[] },
   { href: "/approvisionnement", label: "Approvisionnement", icon: Truck, roles: ["proprietaire"] as Role[] },
+  { href: "/rapports", label: "Rapports & Analytics", icon: BarChart3, roles: ["proprietaire"] as Role[] },
   { href: "/utilisateurs", label: "Utilisateurs", icon: UserCog, roles: ["proprietaire"] as Role[] },
 ];
 

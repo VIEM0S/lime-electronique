@@ -14,6 +14,8 @@ export interface Profil {
   role: Role;
   actif: boolean;
   created_at: string;
+  // Migration 002 — copié depuis auth.users pour affichage/réinitialisation
+  email: string | null;
 }
 
 export interface Article {
@@ -37,6 +39,9 @@ export interface MouvementStock {
   motif: string | null;
   date: string;
   utilisateur_id: string | null;
+  // Migration 002 — traçabilité avant/après (audit Kafora)
+  stock_avant: number | null;
+  stock_apres: number | null;
 }
 
 export interface Client {
@@ -45,6 +50,8 @@ export interface Client {
   telephone: string | null;
   solde_du: number;
   created_at: string;
+  // Migration 002 — limite de crédit optionnelle (audit Kafora)
+  limite_credit: number | null;
 }
 
 export interface Vente {
@@ -61,6 +68,26 @@ export interface Vente {
   date_annulation: string | null;
   // BR-08 / UC-08bis — conflit détecté à la synchronisation hors-ligne
   conflit_sync: boolean;
+  // Migration 002 — échéance de la part à crédit (point 3, audit Kafora)
+  echeance_credit: string | null;
+}
+
+export type StatutCredit = "en_cours" | "en_retard" | "soldee";
+
+// Vue vue_credits_clients (migration_002) — détail des ventes à crédit
+// avec échéance, limite et statut.
+export interface VueCreditClient {
+  vente_id: string;
+  numero_facture: string;
+  date: string;
+  client_id: string;
+  client_nom: string;
+  client_telephone: string | null;
+  limite_credit: number | null;
+  montant_total: number;
+  echeance_credit: string | null;
+  solde_restant: number;
+  statut_credit: StatutCredit;
 }
 
 export interface VenteLigne {
