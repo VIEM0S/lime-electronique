@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { Plus, Pencil, KeyRound } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, Pencil } from "lucide-react";
 import NouvelUtilisateurModal from "./NouvelUtilisateurModal";
 import ModifierUtilisateurModal from "./ModifierUtilisateurModal";
 import Button from "@/components/ui/Button";
@@ -16,24 +15,21 @@ export default function UtilisateursClient({
   utilisateurs: Profil[];
   emailsParId: Record<string, string>;
 }) {
-  const supabase = createClient();
   const [modalNouveau, setModalNouveau] = useState(false);
   const [utilisateurEdite, setUtilisateurEdite] = useState<Profil | null>(null);
   const [toast, setToast] = useState<ToastMsg>(null);
+  const [recherche, setRecherche] = useState("");
 
-  async function reinitialiser(u: Profil) {
-    const email = emailsParId[u.id];
-    if (!email) {
-      setToast({ type: "error", text: "Email introuvable pour cet utilisateur." });
-      return;
-    }
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) {
-      setToast({ type: "error", text: error.message });
-      return;
-    }
-    setToast({ type: "success", text: `Email de réinitialisation envoyé à ${email}.` });
-  }
+  const filtres = useMemo(() => {
+    const q = recherche.trim().toLowerCase();
+    if (!q) return utilisateurs;
+    return utilisateurs.filter(
+      (u) =>
+        u.nom.toLowerCase().includes(q) ||
+        (emailsParId[u.id] ?? "").toLowerCase().includes(q) ||
+        u.role.toLowerCase().includes(q)
+    );
+  }, [utilisateurs, emailsParId, recherche]);
 
   return (
     <div className="space-y-6">
@@ -47,13 +43,20 @@ export default function UtilisateursClient({
         </Button>
       </div>
 
+      <input
+        value={recherche}
+        onChange={(e) => setRecherche(e.target.value)}
+        placeholder="Rechercher par nom, email ou rôle..."
+        className="w-full max-w-sm border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
+      />
+
       <div className="bg-white border border-ink/10 rounded-lg overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-ink/[0.03] text-ink/40 text-left">
             <tr><th className="p-2.5">Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr>
           </thead>
           <tbody>
-            {utilisateurs.map((u) => (
+            {filtres.map((u) => (
               <tr key={u.id} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
                 <td className="p-2.5">{u.nom}</td>
                 <td className="text-ink/50">{emailsParId[u.id] ?? "—"}</td>
@@ -65,18 +68,17 @@ export default function UtilisateursClient({
                     {u.actif ? "Actif" : "Désactivé"}
                   </span>
                 </td>
-                <td className="pr-2.5 text-right space-x-2">
+                <td className="pr-2.5 text-right">
                   <button onClick={() => setUtilisateurEdite(u)}
                     className="inline-flex items-center gap-1 text-ink/40 hover:text-lime-deep text-[11px] font-semibold">
-                    <Pencil size={12} /> Modifier
-                  </button>
-                  <button onClick={() => reinitialiser(u)}
-                    className="inline-flex items-center gap-1 text-ink/40 hover:text-lime-deep text-[11px] font-semibold">
-                    <KeyRound size={12} /> Réinitialiser
+                    <Pencil size={12} /> Modifier / mot de passe
                   </button>
                 </td>
               </tr>
             ))}
+            {filtres.length === 0 && (
+              <tr><td colSpan={5} className="p-4 text-center text-ink/30">Aucun utilisateur trouvé.</td></tr>
+            )}
           </tbody>
         </table>
       </div>

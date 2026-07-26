@@ -97,6 +97,11 @@ export default function LoginPage() {
               {!chargement && <ArrowRight size={14} />}
             </Button>
           </form>
+
+          <p className="text-[11px] text-ink/35 text-center mt-4">
+            Mot de passe oublié ? Contacte le propriétaire — il peut le changer depuis
+            l&apos;écran Utilisateurs.
+          </p>
         </div>
       </div>
     </div>

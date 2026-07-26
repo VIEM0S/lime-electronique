@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, Pencil, Search, EyeOff, Eye } from "lucide-react";
 import ArticleModal from "./ArticleModal";
 import Button from "@/components/ui/Button";
 import Toast, { type ToastMsg } from "@/components/ui/Toast";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import type { Article } from "@/types/database.types";
 
 type Mouvement = {
@@ -23,18 +25,33 @@ export default function CatalogueClient({
   articles: Article[];
   mouvements: Mouvement[];
 }) {
+  const supabase = createClient();
+  const router = useRouter();
   const [recherche, setRecherche] = useState("");
   const [modalOuverte, setModalOuverte] = useState(false);
   const [articleEdite, setArticleEdite] = useState<Article | null>(null);
+  const [afficherDesactives, setAfficherDesactives] = useState(false);
   const [toast, setToast] = useState<ToastMsg>(null);
 
-  const filtres = recherche
-    ? articles.filter(
-        (a) =>
-          a.nom.toLowerCase().includes(recherche.toLowerCase()) ||
-          a.code_article.toLowerCase().includes(recherche.toLowerCase())
-      )
-    : articles;
+  const filtres = useMemo(() => {
+    const base = afficherDesactives ? articles : articles.filter((a) => a.actif);
+    if (!recherche) return base;
+    const q = recherche.toLowerCase();
+    return base.filter((a) => a.nom.toLowerCase().includes(q) || a.code_article.toLowerCase().includes(q));
+  }, [articles, recherche, afficherDesactives]);
+
+  async function basculerActif(a: Article) {
+    const { error } = await supabase.from("articles").update({ actif: !a.actif }).eq("id", a.id);
+    if (error) {
+      setToast({ type: "error", text: error.message });
+      return;
+    }
+    setToast({
+      type: "success",
+      text: a.actif ? `"${a.nom}" désactivé.` : `"${a.nom}" réactivé.`,
+    });
+    router.refresh();
+  }
 
   return (
     <div className="space-y-6">
@@ -54,15 +71,26 @@ export default function CatalogueClient({
         Un numéro = un article (chaque variante est distincte)
       </p>
 
-      <div className="relative max-w-xs">
-        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/30" />
-        <input
-          value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
-          placeholder="Rechercher un article..."
-          className="w-full border border-ink/15 rounded-md pl-8 pr-3 py-1.5 text-xs bg-white
-            focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
-        />
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="relative max-w-xs flex-1 min-w-[200px]">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/30" />
+          <input
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Rechercher un article..."
+            className="w-full border border-ink/15 rounded-md pl-8 pr-3 py-1.5 text-xs bg-white
+              focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
+          />
+        </div>
+        <label className="flex items-center gap-1.5 text-xs text-ink/50 whitespace-nowrap">
+          <input
+            type="checkbox"
+            checked={afficherDesactives}
+            onChange={(e) => setAfficherDesactives(e.target.checked)}
+            className="rounded accent-lime-deep"
+          />
+          Afficher les articles désactivés
+        </label>
       </div>
 
       <div className="bg-white border border-ink/10 rounded-lg overflow-hidden">
@@ -86,15 +114,25 @@ export default function CatalogueClient({
               </tr>
             )}
             {filtres.map((a) => (
-              <tr key={a.id} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
+              <tr
+                key={a.id}
+                className={`border-t border-ink/5 hover:bg-lime/5 transition-colors ${!a.actif ? "opacity-50" : ""}`}
+              >
                 <td className="p-2.5 num">{a.code_article}</td>
-                <td>{a.nom}</td>
+                <td>
+                  {a.nom}
+                  {!a.actif && (
+                    <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded-full bg-ink/10 text-ink/50">
+                      Désactivé
+                    </span>
+                  )}
+                </td>
                 <td className="text-ink/50">{a.categorie}</td>
                 <td className="num">{Number(a.prix_vente).toLocaleString("fr-FR")} FCFA</td>
                 <td className={`num ${a.quantite_stock < 5 ? "text-ember font-semibold" : ""}`}>
                   {a.quantite_stock}
                 </td>
-                <td className="pr-2.5 text-right">
+                <td className="pr-2.5 text-right space-x-1 whitespace-nowrap">
                   <button
                     onClick={() => {
                       setArticleEdite(a);
@@ -104,6 +142,13 @@ export default function CatalogueClient({
                     title="Modifier"
                   >
                     <Pencil size={13} />
+                  </button>
+                  <button
+                    onClick={() => basculerActif(a)}
+                    className="text-ink/40 hover:text-ember p-1 rounded hover:bg-ember/10 transition-colors"
+                    title={a.actif ? "Désactiver" : "Réactiver"}
+                  >
+                    {a.actif ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                 </td>
               </tr>
