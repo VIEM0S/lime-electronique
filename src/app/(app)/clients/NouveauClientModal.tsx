@@ -19,6 +19,7 @@ export default function NouveauClientModal({
   const router = useRouter();
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
+  const [quartier, setQuartier] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
 
@@ -31,7 +32,7 @@ export default function NouveauClientModal({
     setEnvoi(true);
     const { error } = await supabase
       .from("clients")
-      .insert({ nom: nom.trim(), telephone: telephone.trim() || null });
+      .insert({ nom: nom.trim(), telephone: telephone.trim() || null, quartier: quartier.trim() || null });
     setEnvoi(false);
     if (error) {
       setErreur(error.message);
@@ -40,6 +41,7 @@ export default function NouveauClientModal({
     onSaved(`Client "${nom.trim()}" créé.`);
     setNom("");
     setTelephone("");
+    setQuartier("");
     router.refresh();
     onClose();
   }
@@ -68,6 +70,17 @@ export default function NouveauClientModal({
             onChange={(e) => setTelephone(e.target.value)}
             className="w-full border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
             placeholder="+223 70 00 00 00"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+            Quartier (optionnel)
+          </label>
+          <input
+            value={quartier}
+            onChange={(e) => setQuartier(e.target.value)}
+            className="w-full border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
+            placeholder="Badalabougou"
           />
         </div>
         {erreur && <p className="text-xs text-signal">{erreur}</p>}

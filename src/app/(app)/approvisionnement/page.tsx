@@ -31,19 +31,16 @@ export default async function ApprovisionnementPage() {
         <h2 className="text-sm font-display font-semibold mb-2">Arrivages précédents</h2>
         <table className="w-full text-xs">
           <thead className="text-ink/40 text-left">
-            <tr><th className="py-1">Date</th><th>Source</th><th>Lignes</th><th>Coût transport</th><th>Frais douane</th></tr>
+            <tr><th className="py-1">Date</th><th>Lignes</th></tr>
           </thead>
           <tbody>
             {(historique ?? []).length === 0 && (
-              <tr><td colSpan={5} className="py-3 text-center text-ink/30 italic">Aucun arrivage enregistré</td></tr>
+              <tr><td colSpan={2} className="py-3 text-center text-ink/30 italic">Aucun arrivage enregistré</td></tr>
             )}
             {(historique ?? []).map((a: any) => (
               <tr key={a.id} className="border-t border-ink/5">
                 <td className="py-1">{new Date(a.date).toLocaleDateString("fr-FR")}</td>
-                <td>{a.source ?? "—"}</td>
                 <td className="num">{a.approvisionnements_lignes?.length ?? 0} réf.</td>
-                <td className="num">{Number(a.cout_transport).toLocaleString("fr-FR")} FCFA</td>
-                <td className="num">{Number(a.frais_douane).toLocaleString("fr-FR")} FCFA</td>
               </tr>
             ))}
           </tbody>

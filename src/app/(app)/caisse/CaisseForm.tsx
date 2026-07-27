@@ -34,7 +34,12 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
   });
   const [erreur, setErreur] = useState<string | null>(null);
   const [resultat, setResultat] = useState<{ numero_facture: string; statut: string; horsLigne: boolean } | null>(null);
-  const [recu, setRecu] = useState<{ lignes: Ligne[]; total: number; clientNom: string | null } | null>(null);
+  const [recu, setRecu] = useState<{
+    lignes: Ligne[];
+    total: number;
+    clientNom: string | null;
+    paiements: { mode: ModePaiement; montant: number }[];
+  } | null>(null);
   const [envoi, setEnvoi] = useState(false);
 
   const total = useMemo(
@@ -110,7 +115,12 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       });
       setEnvoi(false);
       setResultat({ numero_facture: action.numeroProvisoire, statut: "en attente de synchronisation", horsLigne: true });
-      setRecu({ lignes, total, clientNom: clients.find((c) => c.id === clientId)?.nom ?? null });
+      setRecu({
+        lignes,
+        total,
+        clientNom: clients.find((c) => c.id === clientId)?.nom ?? null,
+        paiements: MODES.filter((m) => montants[m.key] > 0).map((m) => ({ mode: m.key, montant: montants[m.key] })),
+      });
       reinitialiser();
       return;
     }
@@ -167,7 +177,12 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
     setEnvoi(false);
     setResultat({ ...(venteFinale ?? { numero_facture: vente.numero_facture, statut: "impayee" }), horsLigne: false });
-    setRecu({ lignes, total, clientNom: clients.find((c) => c.id === clientId)?.nom ?? null });
+    setRecu({
+      lignes,
+      total,
+      clientNom: clients.find((c) => c.id === clientId)?.nom ?? null,
+      paiements: MODES.filter((m) => montants[m.key] > 0).map((m) => ({ mode: m.key, montant: montants[m.key] })),
+    });
     reinitialiser();
   }
 
@@ -295,6 +310,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
                 clientNom={recu.clientNom}
                 lignes={recu.lignes.map((l) => ({ nom: l.article.nom, quantite: l.quantite, prix_unitaire: l.article.prix_vente }))}
                 total={recu.total}
+                paiements={recu.paiements}
               />
             )}
           </div>

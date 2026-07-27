@@ -22,6 +22,7 @@ export default function ModifierClientModal({
   const router = useRouter();
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
+  const [quartier, setQuartier] = useState("");
   const [limiteCredit, setLimiteCredit] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
@@ -30,6 +31,7 @@ export default function ModifierClientModal({
     if (client) {
       setNom(client.nom);
       setTelephone(client.telephone ?? "");
+      setQuartier(client.quartier ?? "");
       setLimiteCredit(client.limite_credit != null ? String(client.limite_credit) : "");
     }
   }, [client]);
@@ -47,6 +49,7 @@ export default function ModifierClientModal({
       .update({
         nom: nom.trim(),
         telephone: telephone.trim() || null,
+        quartier: quartier.trim() || null,
         limite_credit: limiteCredit.trim() ? Number(limiteCredit) : null,
       })
       .eq("id", client.id);
@@ -78,6 +81,14 @@ export default function ModifierClientModal({
           <input
             value={telephone}
             onChange={(e) => setTelephone(e.target.value)}
+            className="w-full border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">Quartier (optionnel)</label>
+          <input
+            value={quartier}
+            onChange={(e) => setQuartier(e.target.value)}
             className="w-full border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
           />
         </div>

@@ -28,14 +28,9 @@ export default async function RapportsPage() {
   const toutesLesVentes = ventes ?? [];
   const maintenant = new Date();
   const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
-  const debutMoisDernier = new Date(maintenant.getFullYear(), maintenant.getMonth() - 1, 1);
 
   const caTotal = toutesLesVentes.reduce((s, v) => s + Number(v.montant_total), 0);
   const caCeMois = toutesLesVentes.filter((v) => new Date(v.date) >= debutMois).reduce((s, v) => s + Number(v.montant_total), 0);
-  const caMoisDernier = toutesLesVentes
-    .filter((v) => new Date(v.date) >= debutMoisDernier && new Date(v.date) < debutMois)
-    .reduce((s, v) => s + Number(v.montant_total), 0);
-  const variationMois = caMoisDernier > 0 ? ((caCeMois - caMoisDernier) / caMoisDernier) * 100 : null;
   const ticketMoyen = toutesLesVentes.length > 0 ? caTotal / toutesLesVentes.length : 0;
   const clientsActifs = new Set(toutesLesVentes.map((v) => v.client_id).filter(Boolean)).size;
 
@@ -92,11 +87,6 @@ export default async function RapportsPage() {
         <div className="bg-white border border-gray-200 rounded p-4">
           <div className="text-[10px] uppercase tracking-wide text-gray-400">CA ce mois</div>
           <div className="text-lg font-semibold">{caCeMois.toLocaleString("fr-FR")} FCFA</div>
-          {variationMois !== null && (
-            <div className={variationMois >= 0 ? "text-xs text-green-600" : "text-xs text-red-600"}>
-              {variationMois >= 0 ? "▲" : "▼"} {Math.abs(variationMois).toFixed(1)}% vs mois dernier
-            </div>
-          )}
         </div>
         <div className="bg-white border border-gray-200 rounded p-4">
           <div className="text-[10px] uppercase tracking-wide text-gray-400">Ticket moyen</div>

@@ -52,6 +52,8 @@ export interface Client {
   created_at: string;
   // Migration 002 — limite de crédit optionnelle (audit Kafora)
   limite_credit: number | null;
+  // Fix 002 — quartier optionnel du client
+  quartier: string | null;
 }
 
 export interface Vente {

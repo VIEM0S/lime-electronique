@@ -31,7 +31,7 @@ export default async function DashboardPage() {
   sept_jours.setDate(sept_jours.getDate() - 6);
   sept_jours.setHours(0, 0, 0, 0);
 
-  const [{ data: ventesJour }, { data: creances }, { data: stockFaible }, { data: ventesEnConflit }, { data: ventes7j }] =
+  const [{ data: ventesJour }, { data: creances }, { data: stockFaible }, { data: ventesEnConflit }, { data: ventes7j }, { data: paiementsJour }] =
     await Promise.all([
       supabase.from("ventes").select("montant_total").gte("date", debutJournee.toISOString()),
       supabase.from("vue_creances_clients").select("*"),
@@ -49,10 +49,27 @@ export default async function DashboardPage() {
         .select("date, montant_total")
         .gte("date", sept_jours.toISOString())
         .neq("statut", "annulee"),
+      // Encaissements réels du jour par mode (exclut 'credit', qui n'est pas
+      // de l'argent en caisse) — répond à "combien j'ai encaissé et par quel mode".
+      supabase.from("paiements").select("mode, montant").gte("date", debutJournee.toISOString()),
     ]);
 
   const totalVentesJour = (ventesJour ?? []).reduce((s, v) => s + Number(v.montant_total), 0);
   const totalCreances = (creances ?? []).reduce((s, c: any) => s + Number(c.solde_du), 0);
+
+  const LABEL_MODE: Record<string, string> = {
+    especes: "Espèces",
+    mobile_money: "Mobile Money",
+    virement: "Virement",
+    credit: "Crédit (non encaissé)",
+  };
+  const parMode: Record<string, number> = {};
+  (paiementsJour ?? []).forEach((p) => {
+    parMode[p.mode] = (parMode[p.mode] ?? 0) + Number(p.montant);
+  });
+  const totalEncaisseReel = Object.entries(parMode)
+    .filter(([mode]) => mode !== "credit")
+    .reduce((s, [, m]) => s + m, 0);
 
   // FR-29 : agrégation par jour (libellé court fr-FR) pour les 7 derniers jours
   const jours: { jour: string; total: number }[] = [];
@@ -93,6 +110,28 @@ export default async function DashboardPage() {
           tone={stockFaible && stockFaible.length > 0 ? "ember" : "neutral"}
         />
       </div>
+
+      {Object.keys(parMode).length > 0 && (
+        <div className="bg-white border border-ink/10 rounded-lg p-4">
+          <h2 className="text-sm font-display font-semibold mb-1">Encaissé aujourd&apos;hui</h2>
+          <p className="text-xs text-ink/40 italic mb-2">Par mode de paiement — le crédit n&apos;est pas de l&apos;argent en caisse</p>
+          <div className="text-lg font-display font-semibold num mb-2">
+            {totalEncaisseReel.toLocaleString("fr-FR")} FCFA <span className="text-xs font-normal text-ink/40">réellement en caisse</span>
+          </div>
+          <table className="w-full text-xs">
+            <tbody>
+              {Object.entries(parMode).map(([mode, montant]) => (
+                <tr key={mode} className="border-t border-ink/5">
+                  <td className={`py-1 ${mode === "credit" ? "text-ink/40 italic" : ""}`}>{LABEL_MODE[mode] ?? mode}</td>
+                  <td className={`py-1 text-right num ${mode === "credit" ? "text-ink/40 italic" : "font-semibold"}`}>
+                    {montant.toLocaleString("fr-FR")} FCFA
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <VentesChart data={jours} />
 

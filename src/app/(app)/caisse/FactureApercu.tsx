@@ -2,8 +2,31 @@
 
 import { Printer } from "lucide-react";
 import Button from "@/components/ui/Button";
+import type { ModePaiement } from "@/types/database.types";
 
 type LigneRecu = { nom: string; quantite: number; prix_unitaire: number };
+type PaiementRecu = { mode: ModePaiement; montant: number };
+
+const LABEL_MODE: Record<ModePaiement, string> = {
+  especes: "Espèces",
+  mobile_money: "Mobile Money",
+  virement: "Virement",
+  credit: "Crédit (différé)",
+};
+
+// Le statut technique (payee/partielle/impayee) reflète uniquement l'argent
+// réellement encaissé (cf. fix 001) — ici on l'habille pour l'affichage en
+// tenant compte de la présence d'une part à crédit, pour ne jamais afficher
+// "Payé" sur une facture qui inclut du crédit.
+function libelleStatut(statut: string, aDuCredit: boolean): string {
+  if (statut === "en attente de synchronisation") return statut;
+  if (aDuCredit) {
+    if (statut === "impayee") return "À crédit (rien d'encaissé)";
+    if (statut === "partielle") return "Payé en partie — reste à crédit";
+    return statut; // ne devrait pas arriver (payee + credit > 0 est incohérent)
+  }
+  return statut === "payee" ? "Payé" : statut === "partielle" ? "Payé en partie" : "Impayé";
+}
 
 export default function FactureApercu({
   numero,
@@ -11,13 +34,17 @@ export default function FactureApercu({
   clientNom,
   lignes,
   total,
+  paiements = [],
 }: {
   numero: string;
   statut: string;
   clientNom: string | null;
   lignes: LigneRecu[];
   total: number;
+  paiements?: PaiementRecu[];
 }) {
+  const aDuCredit = paiements.some((p) => p.mode === "credit" && p.montant > 0);
+
   return (
     <>
       <div id="zone-impression" className="bg-white border border-ink/10 rounded-lg p-4 text-xs font-mono">
@@ -40,7 +67,23 @@ export default function FactureApercu({
           <span>TOTAL</span>
           <span>{total.toLocaleString("fr-FR")} FCFA</span>
         </div>
-        <div className="text-center text-ink/40 mt-3">Statut : {statut}</div>
+
+        {paiements.length > 0 && (
+          <>
+            <div className="border-t border-dashed border-ink/20 my-2" />
+            <div className="text-ink/50 mb-1">Mode(s) de paiement :</div>
+            {paiements.map((p, i) => (
+              <div key={i} className="flex justify-between">
+                <span>{LABEL_MODE[p.mode]}</span>
+                <span>{p.montant.toLocaleString("fr-FR")}</span>
+              </div>
+            ))}
+          </>
+        )}
+
+        <div className={`text-center mt-3 ${aDuCredit ? "text-ember font-semibold" : "text-ink/40"}`}>
+          Statut : {libelleStatut(statut, aDuCredit)}
+        </div>
       </div>
       <Button variant="secondary" size="sm" onClick={() => window.print()} className="w-full">
         <Printer size={13} /> Imprimer / Enregistrer en PDF

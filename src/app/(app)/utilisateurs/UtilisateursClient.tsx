@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Pencil } from "lucide-react";
-import NouvelUtilisateurModal from "./NouvelUtilisateurModal";
+import { Pencil } from "lucide-react";
 import ModifierUtilisateurModal from "./ModifierUtilisateurModal";
-import Button from "@/components/ui/Button";
 import Toast, { type ToastMsg } from "@/components/ui/Toast";
 import type { Profil } from "@/types/database.types";
 
@@ -15,7 +13,6 @@ export default function UtilisateursClient({
   utilisateurs: Profil[];
   emailsParId: Record<string, string>;
 }) {
-  const [modalNouveau, setModalNouveau] = useState(false);
   const [utilisateurEdite, setUtilisateurEdite] = useState<Profil | null>(null);
   const [toast, setToast] = useState<ToastMsg>(null);
   const [recherche, setRecherche] = useState("");
@@ -33,14 +30,9 @@ export default function UtilisateursClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-display font-semibold text-ink">Gestion des utilisateurs</h1>
-          <p className="text-xs text-ink/40 italic">FR-22 à FR-22quater</p>
-        </div>
-        <Button size="sm" onClick={() => setModalNouveau(true)}>
-          <Plus size={14} /> Nouvel utilisateur
-        </Button>
+      <div>
+        <h1 className="text-lg font-display font-semibold text-ink">Gestion des utilisateurs</h1>
+        <p className="text-xs text-ink/40 italic">FR-22 à FR-22quater</p>
       </div>
 
       <input
@@ -83,11 +75,6 @@ export default function UtilisateursClient({
         </table>
       </div>
 
-      <NouvelUtilisateurModal
-        open={modalNouveau}
-        onClose={() => setModalNouveau(false)}
-        onSaved={(msg) => setToast({ type: "success", text: msg })}
-      />
       <ModifierUtilisateurModal
         open={!!utilisateurEdite}
         onClose={() => setUtilisateurEdite(null)}

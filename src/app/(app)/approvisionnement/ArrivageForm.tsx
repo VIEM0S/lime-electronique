@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Plus, Trash2, Truck } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Toast, { type ToastMsg } from "@/components/ui/Toast";
+import ArticleModal from "../catalogue/ArticleModal";
 
 type ArticleLite = { id: string; code_article: string; nom: string };
 type Ligne = { article_id: string; quantite: string; cout_unitaire: string };
@@ -16,13 +17,14 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
   const supabase = createClient();
   const router = useRouter();
 
-  const [source, setSource] = useState("");
-  const [coutTransport, setCoutTransport] = useState("");
-  const [fraisDouane, setFraisDouane] = useState("");
   const [lignes, setLignes] = useState<Ligne[]>([{ ...LIGNE_VIDE }]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
   const [toast, setToast] = useState<ToastMsg>(null);
+  const [nouvelArticleOuvert, setNouvelArticleOuvert] = useState(false);
+  // index de la ligne pour laquelle on a ouvert "+ Nouvel article",
+  // pour pouvoir la présélectionner une fois créée
+  const [ligneCiblee, setLigneCiblee] = useState<number | null>(null);
 
   function majLigne(i: number, patch: Partial<Ligne>) {
     setLignes((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -34,6 +36,11 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
 
   function retirerLigne(i: number) {
     setLignes((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function ouvrirNouvelArticle(i: number) {
+    setLigneCiblee(i);
+    setNouvelArticleOuvert(true);
   }
 
   async function valider() {
@@ -51,12 +58,7 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
 
     const { data: arrivage, error: erreurArrivage } = await supabase
       .from("approvisionnements")
-      .insert({
-        source: source.trim() || null,
-        cout_transport: Number(coutTransport) || 0,
-        frais_douane: Number(fraisDouane) || 0,
-        utilisateur_id: user?.id ?? null,
-      })
+      .insert({ utilisateur_id: user?.id ?? null })
       .select()
       .single();
 
@@ -82,9 +84,6 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
 
     setEnvoi(false);
     setToast({ type: "success", text: `Arrivage enregistré — ${lignesValides.length} référence(s), stock mis à jour.` });
-    setSource("");
-    setCoutTransport("");
-    setFraisDouane("");
     setLignes([{ ...LIGNE_VIDE }]);
     router.refresh();
   }
@@ -94,42 +93,6 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
       <h2 className="flex items-center gap-1.5 text-sm font-display font-semibold">
         <Truck size={15} className="text-lime-deep" /> Nouvel arrivage
       </h2>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
-            Source / fournisseur
-          </label>
-          <input
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            placeholder="Guangzhou, fournisseur local..."
-            className="w-full border border-ink/15 rounded-md px-2.5 py-1.5 text-xs focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
-          />
-        </div>
-        <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
-            Coût transport (FCFA)
-          </label>
-          <input
-            type="number"
-            value={coutTransport}
-            onChange={(e) => setCoutTransport(e.target.value)}
-            className="w-full border border-ink/15 rounded-md px-2.5 py-1.5 text-xs num focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
-          />
-        </div>
-        <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
-            Frais de douane (FCFA)
-          </label>
-          <input
-            type="number"
-            value={fraisDouane}
-            onChange={(e) => setFraisDouane(e.target.value)}
-            className="w-full border border-ink/15 rounded-md px-2.5 py-1.5 text-xs num focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
-          />
-        </div>
-      </div>
 
       <div className="space-y-2">
         <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">
@@ -147,6 +110,14 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
                 <option key={a.id} value={a.id}>{a.code_article} — {a.nom}</option>
               ))}
             </select>
+            <button
+              type="button"
+              onClick={() => ouvrirNouvelArticle(i)}
+              className="flex items-center gap-1 text-[11px] text-lime-deep hover:text-ink font-semibold whitespace-nowrap px-1.5"
+              title="Créer un nouvel article et l'ajouter à cette ligne"
+            >
+              <Plus size={12} /> Nouvel article
+            </button>
             <input
               type="number"
               placeholder="Qté"
@@ -185,6 +156,20 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
       </Button>
 
       <Toast toast={toast} onDone={() => setToast(null)} />
+
+      {/* Création rapide d'un nouvel article directement depuis l'appro,
+          sans devoir passer par le Catalogue au préalable. */}
+      <ArticleModal
+        open={nouvelArticleOuvert}
+        onClose={() => setNouvelArticleOuvert(false)}
+        article={null}
+        onSaved={() => {
+          setToast({ type: "success", text: "Article créé — sélectionnez-le dans la ligne." });
+          // La liste `articles` vient du parent (server component) et sera
+          // rafraîchie par ArticleModal via router.refresh(); on referme juste.
+          if (ligneCiblee !== null) setLigneCiblee(null);
+        }}
+      />
     </div>
   );
 }

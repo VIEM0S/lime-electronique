@@ -5,7 +5,20 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { SessionCaisse } from "@/types/database.types";
 
-export default function SessionCaisseForm({ sessionOuverte }: { sessionOuverte: SessionCaisse | null }) {
+const LABEL_MODE: Record<string, string> = {
+  especes: "Espèces",
+  mobile_money: "Mobile Money",
+  virement: "Virement",
+  credit: "Crédit (non encaissé)",
+};
+
+export default function SessionCaisseForm({
+  sessionOuverte,
+  paiementsSession = [],
+}: {
+  sessionOuverte: SessionCaisse | null;
+  paiementsSession?: { mode: string; montant: number }[];
+}) {
   const supabase = createClient();
   const router = useRouter();
 
@@ -107,6 +120,37 @@ export default function SessionCaisseForm({ sessionOuverte }: { sessionOuverte: 
         Session ouverte le {new Date(sessionOuverte.date_ouverture).toLocaleString("fr-FR")} — fonds initial :{" "}
         {Number(sessionOuverte.montant_ouverture).toLocaleString("fr-FR")} FCFA
       </p>
+
+      {paiementsSession.length > 0 && (() => {
+        const parMode: Record<string, number> = {};
+        paiementsSession.forEach((p) => {
+          parMode[p.mode] = (parMode[p.mode] ?? 0) + Number(p.montant);
+        });
+        const especesAttendu = Number(sessionOuverte.montant_ouverture) + (parMode.especes ?? 0);
+        return (
+          <div className="bg-ink/[0.03] rounded-md p-3 space-y-1">
+            <p className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1">
+              Ventes de cette session — pour justificatif de l&apos;écart
+            </p>
+            {Object.entries(parMode).map(([mode, montant]) => (
+              <div key={mode} className="flex justify-between text-xs">
+                <span className={mode === "credit" ? "text-ink/40 italic" : "text-ink/60"}>
+                  {LABEL_MODE[mode] ?? mode}
+                </span>
+                <span className="num">{montant.toLocaleString("fr-FR")} FCFA</span>
+              </div>
+            ))}
+            <div className="border-t border-ink/10 mt-1 pt-1 flex justify-between text-xs font-semibold">
+              <span>Espèces attendues en caisse</span>
+              <span className="num">{especesAttendu.toLocaleString("fr-FR")} FCFA</span>
+            </div>
+            <p className="text-[10px] text-ink/40 italic">
+              (fonds initial + espèces encaissées — le crédit et les paiements électroniques ne sont pas du liquide)
+            </p>
+          </div>
+        );
+      })()}
+
       <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">
         Montant compté physiquement (fermeture)
       </label>

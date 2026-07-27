@@ -49,6 +49,7 @@ export default function ClientsClient({ clients }: { clients: Client[] }) {
             <tr>
               <th className="p-2.5">Client</th>
               <th>Téléphone</th>
+              <th>Quartier</th>
               <th>Solde dû</th>
               <th></th>
             </tr>
@@ -56,7 +57,7 @@ export default function ClientsClient({ clients }: { clients: Client[] }) {
           <tbody>
             {filtres.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-6 text-center text-ink/30 italic">
+                <td colSpan={5} className="p-6 text-center text-ink/30 italic">
                   Aucun client trouvé.
                 </td>
               </tr>
@@ -65,6 +66,7 @@ export default function ClientsClient({ clients }: { clients: Client[] }) {
               <tr key={c.id} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
                 <td className="p-2.5">{c.nom}</td>
                 <td className="text-ink/50">{c.telephone ?? "—"}</td>
+                <td className="text-ink/50">{c.quartier ?? "—"}</td>
                 <td className={`num ${Number(c.solde_du) > 0 ? "text-ember font-semibold" : "text-ink/40"}`}>
                   {Number(c.solde_du).toLocaleString("fr-FR")} FCFA
                 </td>
