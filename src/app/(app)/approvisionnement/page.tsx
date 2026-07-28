@@ -4,17 +4,14 @@ import ArrivageForm from "./ArrivageForm";
 export default async function ApprovisionnementPage() {
   const supabase = await createClient();
 
-  const { data: historique } = await supabase
-    .from("approvisionnements")
-    .select("*, approvisionnements_lignes(quantite)")
-    .order("date", { ascending: false })
-    .limit(10);
-
-  const { data: articles } = await supabase
-    .from("articles")
-    .select("id, code_article, nom")
-    .eq("actif", true)
-    .order("nom");
+  const [{ data: historique }, { data: articles }] = await Promise.all([
+    supabase
+      .from("approvisionnements")
+      .select("*, approvisionnements_lignes(quantite)")
+      .order("date", { ascending: false })
+      .limit(10),
+    supabase.from("articles").select("id, code_article, nom").eq("actif", true).order("nom"),
+  ]);
 
   return (
     <div className="space-y-6">

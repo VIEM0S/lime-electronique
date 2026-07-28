@@ -1,29 +1,20 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getProfilCourant } from "@/lib/supabase/current-user";
 import SyncBar from "@/components/SyncBar";
 import Nav from "@/components/Nav";
 import DeconnexionButton from "@/components/DeconnexionButton";
-import type { Profil } from "@/types/database.types";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
+  const profil = await getProfilCourant();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!profil) {
     redirect("/login");
   }
 
-  const { data: profil } = await supabase
-    .from("profils")
-    .select("*")
-    .eq("id", user!.id)
-    .single<Profil>();
-
-  if (!profil || !profil.actif) {
-    // Compte inconnu ou désactivé (cf. FR-22ter) : on refuse l'accès.
+  if (!profil.actif) {
+    // Compte désactivé (cf. FR-22ter) : on refuse l'accès.
+    const supabase = await createClient();
     await supabase.auth.signOut();
     redirect("/login");
   }

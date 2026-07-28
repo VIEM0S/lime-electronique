@@ -1,24 +1,39 @@
 import { createClient } from "@/lib/supabase/server";
+import { getProfilCourant } from "@/lib/supabase/current-user";
 import SessionCaisseForm from "./SessionCaisseForm";
 
 export default async function SessionCaissePage() {
   const supabase = await createClient();
+  const profil = await getProfilCourant();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: sessionOuverte } = await supabase
-    .from("sessions_caisse")
-    .select("*")
-    .eq("utilisateur_id", user?.id)
-    .eq("statut", "ouverte")
-    .maybeSingle();
+  const [{ data: sessionOuverte }, { data: historique }, { data: ecartsNegatifs }] = await Promise.all([
+    supabase
+      .from("sessions_caisse")
+      .select("*")
+      .eq("utilisateur_id", profil?.id)
+      .eq("statut", "ouverte")
+      .maybeSingle(),
+    supabase
+      .from("sessions_caisse")
+      .select("*")
+      .eq("statut", "fermee")
+      .order("date_fermeture", { ascending: false })
+      .limit(10),
+    // Alerte propriétaire : sessions fermées récemment avec un écart négatif
+    // (manque en caisse). Le propriétaire voit tout (RLS "gere_sessions_caisse").
+    supabase
+      .from("sessions_caisse")
+      .select("*")
+      .eq("statut", "fermee")
+      .lt("ecart", 0)
+      .order("date_fermeture", { ascending: false })
+      .limit(5),
+  ]);
 
   // Répartition par mode de paiement des ventes de CETTE session (donc de
   // CET utilisateur), pour servir de justificatif si l'écart de caisse à la
-  // fermeture est négatif. Important : filtré par utilisateur_id de la
-  // session, sinon on mélangerait les ventes de tous les caissiers.
+  // fermeture est négatif. Dépend du résultat ci-dessus (date d'ouverture),
+  // ne peut donc pas être parallélisée avec le bloc précédent.
   let repartitionParMode: { mode: string; montant: number }[] = [];
   if (sessionOuverte) {
     const { data: paiementsSession } = await supabase
@@ -33,23 +48,6 @@ export default async function SessionCaissePage() {
     });
     repartitionParMode = Object.entries(parMode).map(([mode, montant]) => ({ mode, montant }));
   }
-
-  const { data: historique } = await supabase
-    .from("sessions_caisse")
-    .select("*")
-    .eq("statut", "fermee")
-    .order("date_fermeture", { ascending: false })
-    .limit(10);
-
-  // Alerte propriétaire : sessions fermées récemment avec un écart négatif
-  // (manque en caisse). Le propriétaire voit tout (RLS "gere_sessions_caisse").
-  const { data: ecartsNegatifs } = await supabase
-    .from("sessions_caisse")
-    .select("*")
-    .eq("statut", "fermee")
-    .lt("ecart", 0)
-    .order("date_fermeture", { ascending: false })
-    .limit(5);
 
   return (
     <div className="space-y-6">

@@ -16,6 +16,18 @@ h1, h2, h3, .font-display {
   font-family: var(--font-display), system-ui, sans-serif;
 }
 
+/* iOS Safari zoome automatiquement la page quand on touche un champ dont la
+   taille de police calculée est < 16px — c'est ce qui donnait l'impression
+   que l'app restait "zoomée" après avoir tapé dans un champ. En dessous de
+   16px partout où on saisit du texte règle le problème à la source (bien
+   plus fiable que de désactiver le zoom via la balise viewport, qui casse
+   l'accessibilité pour les personnes qui zooment volontairement). */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Respect du focus clavier partout, y compris sur les cartes/boutons custom */
 :focus-visible {
   outline: 2px solid theme("colors.lime.deep");

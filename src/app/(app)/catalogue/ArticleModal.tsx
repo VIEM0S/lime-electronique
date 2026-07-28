@@ -124,7 +124,7 @@ export default function ArticleModal({
   return (
     <Modal open={open} onClose={onClose} title={article ? "Modifier l'article" : "Nouvel article"}>
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Code article">
             <input
               value={form.code_article}
@@ -194,7 +194,7 @@ export default function ArticleModal({
           />
         </Field>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field label="Prix achat">
             <input
               type="number"

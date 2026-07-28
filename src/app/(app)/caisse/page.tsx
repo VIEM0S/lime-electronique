@@ -1,35 +1,27 @@
 import { createClient } from "@/lib/supabase/server";
+import { getProfilCourant } from "@/lib/supabase/current-user";
 import CaisseForm from "./CaisseForm";
 import VentesRecentes from "./VentesRecentes";
 
 export default async function CaissePage() {
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profil } = await supabase
-    .from("profils")
-    .select("role")
-    .eq("id", user?.id)
-    .single();
+  const profil = await getProfilCourant();
 
   // Chargé une fois au rendu serveur ; la recherche fine se fait côté client
   // (cf. CaisseForm) via une requête filtrée sur code_article/nom.
-  const { data: articles } = await supabase
-    .from("articles")
-    .select("id, code_article, nom, prix_vente, quantite_stock")
-    .eq("actif", true)
-    .order("nom");
-
-  const { data: clients } = await supabase.from("clients").select("id, nom, telephone").order("nom");
-
-  const { data: ventesRecentes } = await supabase
-    .from("ventes")
-    .select("id, numero_facture, date, montant_total, statut, conflit_sync")
-    .order("date", { ascending: false })
-    .limit(10);
+  const [{ data: articles }, { data: clients }, { data: ventesRecentes }] = await Promise.all([
+    supabase
+      .from("articles")
+      .select("id, code_article, nom, prix_vente, quantite_stock")
+      .eq("actif", true)
+      .order("nom"),
+    supabase.from("clients").select("id, nom, telephone").order("nom"),
+    supabase
+      .from("ventes")
+      .select("id, numero_facture, date, montant_total, statut, conflit_sync")
+      .order("date", { ascending: false })
+      .limit(10),
+  ]);
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getProfilCourant } from "@/lib/supabase/current-user";
 import { redirect } from "next/navigation";
 import { Wallet, AlertTriangle, PackageX, AlertOctagon, type LucideIcon } from "lucide-react";
 import VentesChart from "./VentesChart";
@@ -8,16 +9,7 @@ const SEUIL_STOCK_FAIBLE = 5; // FR-28
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profilCourant } = await supabase
-    .from("profils")
-    .select("role")
-    .eq("id", user?.id)
-    .single();
+  const profilCourant = await getProfilCourant();
 
   // Le tableau de bord est réservé au propriétaire (cf. Nav) — on l'applique
   // aussi côté serveur pour empêcher un accès direct par URL (FR-23).

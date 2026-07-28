@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
@@ -19,6 +19,11 @@ const mono = IBM_Plex_Mono({
   variable: "--font-mono",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "Lime-électronique — Gestion",
   description: "Système de gestion — catalogue, stock, ventes, clients, approvisionnement",
@@ -31,6 +36,9 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Lime-électronique",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 };
 
