@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Wallet, AlertTriangle, PackageX, AlertOctagon, type LucideIcon } from "lucide-react";
 import VentesChart from "./VentesChart";
+import NotificationsPush from "@/components/NotificationsPush";
 
 const SEUIL_STOCK_FAIBLE = 5; // FR-28
 
@@ -86,6 +87,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-lg font-display font-semibold text-ink">Tableau de bord</h1>
+
+      <NotificationsPush />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Kpi

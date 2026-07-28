@@ -56,3 +56,40 @@ self.addEventListener("fetch", (event) => {
       })
   );
 });
+
+// ----------------------------------------------------------------------------
+// Notifications push (alertes ouverture/fermeture de session de caisse).
+// Le payload est du JSON envoyé par l'Edge Function `notifier-session-caisse` :
+// { title, body, url, urgent }
+// ----------------------------------------------------------------------------
+self.addEventListener("push", (event) => {
+  let data = { title: "Lime-électronique", body: "Nouvelle alerte.", url: "/dashboard" };
+  try {
+    if (event.data) data = { ...data, ...event.data.json() };
+  } catch {
+    // payload non-JSON — on garde les valeurs par défaut
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url: data.url },
+      requireInteraction: !!data.urgent,
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/dashboard";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsList) => {
+      for (const client of clientsList) {
+        if (client.url.includes(url) && "focus" in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
+  );
+});
