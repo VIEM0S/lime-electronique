@@ -1,3 +1,48 @@
+diff --git a/public/sw.js b/public/sw.js
+index 32210ca..1f30b7a 100644
+--- a/public/sw.js
++++ b/public/sw.js
+@@ -56,3 +56,40 @@ self.addEventListener("fetch", (event) => {
+       })
+   );
+ });
++
++// ----------------------------------------------------------------------------
++// Notifications push (alertes ouverture/fermeture de session de caisse).
++// Le payload est du JSON envoyé par l'Edge Function `notifier-session-caisse` :
++// { title, body, url, urgent }
++// ----------------------------------------------------------------------------
++self.addEventListener("push", (event) => {
++  let data = { title: "Lime-électronique", body: "Nouvelle alerte.", url: "/dashboard" };
++  try {
++    if (event.data) data = { ...data, ...event.data.json() };
++  } catch {
++    // payload non-JSON — on garde les valeurs par défaut
++  }
++
++  event.waitUntil(
++    self.registration.showNotification(data.title, {
++      body: data.body,
++      icon: "/icons/icon-192.png",
++      badge: "/icons/icon-192.png",
++      data: { url: data.url },
++      requireInteraction: !!data.urgent,
++    })
++  );
++});
++
++self.addEventListener("notificationclick", (event) => {
++  event.notification.close();
++  const url = event.notification.data?.url || "/dashboard";
++  event.waitUntil(
++    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsList) => {
++      for (const client of clientsList) {
++        if (client.url.includes(url) && "focus" in client) return client.focus();
++      }
++      if (self.clients.openWindow) return self.clients.openWindow(url);
++    })
++  );
++});
 diff --git a/src/app/(app)/approvisionnement/ArrivageForm.tsx b/src/app/(app)/approvisionnement/ArrivageForm.tsx
 index 5180e3b..08a9d0c 100644
 --- a/src/app/(app)/approvisionnement/ArrivageForm.tsx
@@ -581,10 +626,18 @@ index 14bf068..ce63b7a 100644
            </Button>
            <Button onClick={enregistrer} disabled={envoi} className="flex-1">
 diff --git a/src/app/(app)/dashboard/page.tsx b/src/app/(app)/dashboard/page.tsx
-index 300e1a8..2c12797 100644
+index 300e1a8..4832ffd 100644
 --- a/src/app/(app)/dashboard/page.tsx
 +++ b/src/app/(app)/dashboard/page.tsx
-@@ -31,7 +31,7 @@ export default async function DashboardPage() {
+@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
+ import { redirect } from "next/navigation";
+ import { Wallet, AlertTriangle, PackageX, AlertOctagon, type LucideIcon } from "lucide-react";
+ import VentesChart from "./VentesChart";
++import NotificationsPush from "@/components/NotificationsPush";
+ 
+ const SEUIL_STOCK_FAIBLE = 5; // FR-28
+ 
+@@ -31,7 +32,7 @@ export default async function DashboardPage() {
    sept_jours.setDate(sept_jours.getDate() - 6);
    sept_jours.setHours(0, 0, 0, 0);
  
@@ -593,7 +646,7 @@ index 300e1a8..2c12797 100644
      await Promise.all([
        supabase.from("ventes").select("montant_total").gte("date", debutJournee.toISOString()),
        supabase.from("vue_creances_clients").select("*"),
-@@ -49,11 +49,28 @@ export default async function DashboardPage() {
+@@ -49,11 +50,28 @@ export default async function DashboardPage() {
          .select("date, montant_total")
          .gte("date", sept_jours.toISOString())
          .neq("statut", "annulee"),
@@ -622,7 +675,16 @@ index 300e1a8..2c12797 100644
    // FR-29 : agrégation par jour (libellé court fr-FR) pour les 7 derniers jours
    const jours: { jour: string; total: number }[] = [];
    for (let i = 6; i >= 0; i--) {
-@@ -94,6 +111,28 @@ export default async function DashboardPage() {
+@@ -70,6 +88,8 @@ export default async function DashboardPage() {
+     <div className="space-y-6">
+       <h1 className="text-lg font-display font-semibold text-ink">Tableau de bord</h1>
+ 
++      <NotificationsPush />
++
+       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+         <Kpi
+           icon={Wallet}
+@@ -94,6 +114,28 @@ export default async function DashboardPage() {
          />
        </div>
  
@@ -870,6 +932,149 @@ index 8ca9110..25fe970 100644
        <ModifierUtilisateurModal
          open={!!utilisateurEdite}
          onClose={() => setUtilisateurEdite(null)}
+diff --git a/src/components/NotificationsPush.tsx b/src/components/NotificationsPush.tsx
+new file mode 100644
+index 0000000..4108493
+--- /dev/null
++++ b/src/components/NotificationsPush.tsx
+@@ -0,0 +1,137 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import { Bell, BellOff, BellRing } from "lucide-react";
++import { createClient } from "@/lib/supabase/client";
++
++// Clé publique VAPID — publique par nature (le pendant privé reste côté
++// Edge Function, jamais exposé ici). Générée pour ce projet uniquement.
++const VAPID_PUBLIC_KEY = "BPahTaVG_ymj0bvJX1-DfMv8yf-TrIXQaFATJGvHO-aBG_-zHCmIS6Wu2CLcbfSjfZWiW1dgHJ46Z9iph9F4aFw";
++
++function urlBase64ToUint8Array(base64String: string): Uint8Array {
++  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
++  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
++  const rawData = atob(base64);
++  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
++}
++
++type Etat = "indisponible" | "inactif" | "actif" | "en_cours" | "refuse";
++
++export default function NotificationsPush() {
++  const supabase = createClient();
++  const [etat, setEtat] = useState<Etat>("inactif");
++  const [erreur, setErreur] = useState<string | null>(null);
++
++  useEffect(() => {
++    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
++      setEtat("indisponible");
++      return;
++    }
++    if (Notification.permission === "denied") {
++      setEtat("refuse");
++      return;
++    }
++    navigator.serviceWorker.ready.then(async (registration) => {
++      const abonnementExistant = await registration.pushManager.getSubscription();
++      setEtat(abonnementExistant ? "actif" : "inactif");
++    });
++  }, []);
++
++  async function activer() {
++    setErreur(null);
++    setEtat("en_cours");
++    try {
++      const permission = await Notification.requestPermission();
++      if (permission !== "granted") {
++        setEtat(permission === "denied" ? "refuse" : "inactif");
++        return;
++      }
++
++      const registration = await navigator.serviceWorker.ready;
++      const subscription = await registration.pushManager.subscribe({
++        userVisibleOnly: true,
++        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
++      });
++
++      const {
++        data: { user },
++      } = await supabase.auth.getUser();
++      if (!user) throw new Error("Utilisateur non connecté.");
++
++      const json = subscription.toJSON();
++      const { error } = await supabase.from("push_subscriptions").upsert(
++        {
++          utilisateur_id: user.id,
++          endpoint: subscription.endpoint,
++          p256dh: json.keys?.p256dh,
++          auth: json.keys?.auth,
++        },
++        { onConflict: "endpoint" }
++      );
++      if (error) throw error;
++
++      setEtat("actif");
++    } catch (e: any) {
++      setErreur(e?.message ?? "Impossible d'activer les notifications.");
++      setEtat("inactif");
++    }
++  }
++
++  async function desactiver() {
++    setErreur(null);
++    try {
++      const registration = await navigator.serviceWorker.ready;
++      const subscription = await registration.pushManager.getSubscription();
++      if (subscription) {
++        await supabase.from("push_subscriptions").delete().eq("endpoint", subscription.endpoint);
++        await subscription.unsubscribe();
++      }
++      setEtat("inactif");
++    } catch (e: any) {
++      setErreur(e?.message ?? "Impossible de désactiver les notifications.");
++    }
++  }
++
++  if (etat === "indisponible") return null;
++
++  return (
++    <div className="bg-white border border-ink/10 rounded-lg p-4">
++      <div className="flex items-center justify-between gap-3">
++        <div className="flex items-center gap-2">
++          {etat === "actif" ? (
++            <BellRing size={16} className="text-lime-deep" />
++          ) : (
++            <Bell size={16} className="text-ink/40" />
++          )}
++          <div>
++            <p className="text-sm font-display font-semibold">Alertes de caisse</p>
++            <p className="text-xs text-ink/40">
++              {etat === "actif"
++                ? "Actives — tu reçois une notification à l'ouverture/fermeture de session, surtout si l'écart est négatif."
++                : etat === "refuse"
++                ? "Bloquées dans les réglages de ton navigateur/téléphone — réactive-les manuellement pour recevoir les alertes."
++                : "Reçois une vraie notification (même app fermée) à l'ouverture/fermeture de session."}
++            </p>
++          </div>
++        </div>
++        {etat === "actif" ? (
++          <button
++            onClick={desactiver}
++            className="flex items-center gap-1 text-xs text-ink/50 hover:text-signal font-semibold whitespace-nowrap"
++          >
++            <BellOff size={13} /> Désactiver
++          </button>
++        ) : etat === "refuse" ? null : (
++          <button
++            onClick={activer}
++            disabled={etat === "en_cours"}
++            className="flex items-center gap-1 text-xs bg-lime-deep text-white px-3 py-1.5 rounded-md font-semibold hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
++          >
++            <Bell size={13} /> {etat === "en_cours" ? "..." : "Activer"}
++          </button>
++        )}
++      </div>
++      {erreur && <p className="text-xs text-signal mt-2">{erreur}</p>}
++    </div>
++  );
++}
 diff --git a/src/types/database.types.ts b/src/types/database.types.ts
 index d61b7b3..5467bc4 100644
 --- a/src/types/database.types.ts
@@ -883,27 +1088,24 @@ index d61b7b3..5467bc4 100644
  }
  
  export interface Vente {
-diff --git a/supabase/fixes/001_fix_statut_credit.sql b/supabase/fixes/001_fix_statut_credit.sql
+diff --git a/supabase/fixes/001_fix_statut_credit_v2.sql b/supabase/fixes/001_fix_statut_credit_v2.sql
 new file mode 100644
-index 0000000..69327aa
+index 0000000..c36085c
 --- /dev/null
-+++ b/supabase/fixes/001_fix_statut_credit.sql
-@@ -0,0 +1,87 @@
++++ b/supabase/fixes/001_fix_statut_credit_v2.sql
+@@ -0,0 +1,83 @@
 +-- ============================================================================
-+-- FIX 001 — Le mode 'credit' était compté comme un paiement réel
++-- FIX 001 (v2 — corrigé après lecture de migration_002.sql réelle)
++-- Le mode 'credit' était compté comme un paiement réel
 +-- ============================================================================
-+-- Bug : fn_apres_paiement() faisait la somme de TOUS les paiements
-+-- (y compris mode = 'credit') pour décider si statut = 'payee'. Résultat :
-+-- une vente 100% à crédit passait "payée" alors que rien n'a été encaissé.
++-- Repart de la vraie fn_apres_paiement() de migration_002.sql (celle avec
++-- la garde `statut != 'annulee'` et la pose de `echeance_credit`), pas de
++-- la version simplifiée de schema.sql. Si tu as déjà appliqué la première
++-- version de ce fix que je t'ai envoyée, rejoue simplement celle-ci
++-- par-dessus : create or replace est sans risque à rejouer.
 +--
-+-- Fix : le statut ne se base plus que sur les paiements réellement encaissés
-+-- (especes / mobile_money / virement). Le crédit continue d'augmenter
-+-- solde_du du client comme avant (logique inchangée sur ce point).
-+--
-+-- Impact : aucune migration de données nécessaire, aucune colonne modifiée.
-+-- Les ventes déjà existantes gardent leur statut actuel (ce fix ne s'applique
-+-- qu'aux nouveaux insert dans paiements). Si tu veux aussi corriger les
-+-- ventes déjà en base, vois la requête de rattrapage tout en bas (optionnelle).
++-- Bug : le statut se basait sur TOUS les paiements, crédit inclus. Une
++-- vente 100% à crédit passait donc "payée" alors que rien n'est encaissé.
 +-- ============================================================================
 +
 +create or replace function public.fn_apres_paiement()
@@ -927,7 +1129,7 @@ index 0000000..69327aa
 +    when v_total_paye_reel > 0 then 'partielle'
 +    else 'impayee'
 +  end
-+  where id = new.vente_id;
++  where id = new.vente_id and statut != 'annulee';
 +
 +  if new.mode = 'credit' then
 +    if v_client_id is null then
@@ -936,20 +1138,20 @@ index 0000000..69327aa
 +    update public.clients
 +    set solde_du = solde_du + new.montant
 +    where id = v_client_id;
++
++    update public.ventes
++    set echeance_credit = coalesce(echeance_credit, (current_date + interval '30 days')::date)
++    where id = new.vente_id;
 +  end if;
 +
 +  return new;
 +end;
 +$$ language plpgsql security definer set search_path = public, pg_temp;
 +
-+-- Le trigger existant pointe déjà vers cette fonction (create or replace
-+-- suffit, pas besoin de recréer trg_apres_paiement).
-+
 +-- ----------------------------------------------------------------------------
 +-- OPTIONNEL — rattrapage des ventes déjà enregistrées avec le mauvais statut
-+-- (à lancer une seule fois, après avoir vérifié le résultat du SELECT ci-dessous)
++-- (vérifier d'abord avec le SELECT, appliquer ensuite volontairement)
 +-- ----------------------------------------------------------------------------
-+-- 1) Vérifier ce qui va changer :
 +-- select v.id, v.numero_facture, v.statut as statut_actuel,
 +--        coalesce(sum(p.montant) filter (where p.mode <> 'credit'), 0) as reel_encaisse,
 +--        v.montant_total
@@ -963,7 +1165,6 @@ index 0000000..69327aa
 +--   else 'impayee'
 +-- end;
 +--
-+-- 2) Puis appliquer :
 +-- update public.ventes v
 +-- set statut = case
 +--   when reel.total >= v.montant_total then 'payee'
@@ -990,3 +1191,368 @@ index 0000000..1d2baed
 +
 +alter table public.clients
 +  add column if not exists quartier text;
+diff --git a/supabase/fixes/003_fix_vue_credits_clients.sql b/supabase/fixes/003_fix_vue_credits_clients.sql
+new file mode 100644
+index 0000000..4c4d76b
+--- /dev/null
++++ b/supabase/fixes/003_fix_vue_credits_clients.sql
+@@ -0,0 +1,113 @@
++-- ============================================================================
++-- FIX 003 — vue_credits_clients comptait le crédit comme déjà réglé
++-- ============================================================================
++-- BUG TROUVÉ dans migration_002.sql :
++--
++--   solde_restant = montant_total - sum(paiements de CETTE vente)
++--
++-- Le souci : la part "credit" d'une vente est elle-même enregistrée comme une
++-- ligne dans `paiements` (mode = 'credit') au moment de la vente. Donc dès la
++-- création de la facture, sum(paiements) == montant_total (espèces + mobile
++-- money + virement + credit), et solde_restant tombe à 0 IMMÉDIATEMENT,
++-- même si rien n'a été réellement encaissé sur la part à crédit.
++-- C'est exactement pourquoi la facture d'Awa Traoré apparaissait "Soldée"
++-- avec solde_restant = 0 alors que Clients & créances affichait encore
++-- 250 000 FCFA dus (ce dernier chiffre, lui, est correct — cf. plus bas).
++--
++-- Second problème, plus profond : même corrigé pour ignorer le mode
++-- 'credit', ce calcul par facture ne peut jamais refléter un remboursement
++-- ultérieur, car `remboursements_credit` n'est pas lié à une vente précise
++-- (il ne connaît que le client). Il n'y a donc pas de vérité unique
++-- "combien reste dû sur CETTE facture" sans décider d'une règle
++-- d'allocation. Ce fix applique une règle FIFO : chaque remboursement du
++-- client rembourse d'abord sa plus ancienne facture à crédit non soldée,
++-- puis la suivante, etc. — c'est la convention comptable la plus naturelle
++-- et la plus simple à expliquer à un client.
++--
++-- Résultat après ce fix :
++--   - somme des solde_restant de toutes les factures à crédit d'un client
++--     == clients.solde_du (les deux écrans redeviennent cohérents)
++--   - un remboursement partiel se voit correctement répercuté sur la
++--     facture la plus ancienne d'abord
++-- ============================================================================
++
++create or replace view public.vue_credits_clients as
++with ventes_credit as (
++  -- Uniquement les ventes ayant une composante à crédit (echeance_credit
++  -- n'est posée que lorsque mode = 'credit', cf. fn_apres_paiement),
++  -- en excluant les ventes annulées.
++  select
++    v.id as vente_id,
++    v.numero_facture,
++    v.date,
++    v.client_id,
++    v.montant_total,
++    v.echeance_credit,
++    coalesce((
++      select sum(p.montant) from public.paiements p
++      where p.vente_id = v.id and p.mode = 'credit'
++    ), 0) as montant_credit
++  from public.ventes v
++  where v.echeance_credit is not null
++    and v.statut <> 'annulee'
++),
++cumul as (
++  -- Cumul du crédit initial du client, dans l'ordre chronologique, pour
++  -- pouvoir allouer ses remboursements en FIFO (plus ancienne facture
++  -- remboursée en premier).
++  select
++    vc.*,
++    sum(vc.montant_credit) over (
++      partition by vc.client_id order by vc.date, vc.vente_id
++      rows between unbounded preceding and 1 preceding
++    ) as cumul_credit_avant
++  from ventes_credit vc
++),
++remboursements as (
++  select client_id, coalesce(sum(montant), 0) as total_rembourse
++  from public.remboursements_credit
++  group by client_id
++)
++select
++  cum.vente_id,
++  cum.numero_facture,
++  cum.date,
++  c.id as client_id,
++  c.nom as client_nom,
++  c.telephone as client_telephone,
++  c.limite_credit,
++  cum.montant_total,
++  cum.echeance_credit,
++  greatest(
++    cum.montant_credit - least(
++      greatest(coalesce(r.total_rembourse, 0) - coalesce(cum.cumul_credit_avant, 0), 0),
++      cum.montant_credit
++    ),
++    0
++  ) as solde_restant,
++  case
++    when greatest(
++      cum.montant_credit - least(
++        greatest(coalesce(r.total_rembourse, 0) - coalesce(cum.cumul_credit_avant, 0), 0),
++        cum.montant_credit
++      ),
++      0
++    ) <= 0 then 'soldee'
++    when cum.echeance_credit is not null and cum.echeance_credit < current_date then 'en_retard'
++    else 'en_cours'
++  end as statut_credit
++from cumul cum
++join public.clients c on c.id = cum.client_id
++left join remboursements r on r.client_id = cum.client_id
++order by cum.echeance_credit asc nulls last;
++
++-- ----------------------------------------------------------------------------
++-- Vérification à lancer après application (aucune ligne ne doit remonter) :
++-- doit confirmer que le total par client dans cette vue == clients.solde_du
++-- ----------------------------------------------------------------------------
++-- select c.id, c.nom, c.solde_du,
++--        coalesce(sum(vc.solde_restant), 0) as total_vue_credits
++-- from public.clients c
++-- left join public.vue_credits_clients vc on vc.client_id = c.id
++-- group by c.id, c.nom, c.solde_du
++-- having c.solde_du <> coalesce(sum(vc.solde_restant), 0);
+diff --git a/supabase/fixes/004_notifications_push.sql b/supabase/fixes/004_notifications_push.sql
+new file mode 100644
+index 0000000..d2a60c5
+--- /dev/null
++++ b/supabase/fixes/004_notifications_push.sql
+@@ -0,0 +1,93 @@
++-- ============================================================================
++-- FIX 004 — Notifications push (ouverture/fermeture de session de caisse)
++-- ============================================================================
++-- Vraies notifications navigateur/téléphone (Web Push), qui arrivent même
++-- app fermée. Fonctionne comme ceci :
++--   1. Le propriétaire clique "Activer les alertes" dans l'app → son
++--      navigateur s'abonne au push, l'abonnement est stocké ici.
++--   2. À l'ouverture ou la fermeture d'une session de caisse, un trigger
++--      Postgres appelle l'Edge Function `notifier-session-caisse` (via
++--      pg_net, en tâche de fond, sans bloquer la transaction).
++--   3. L'Edge Function envoie la notification à tous les abonnés
++--      "propriétaire" via le protocole Web Push standard (pas de
++--      SMS/WhatsApp, pas de coût par message).
++-- ============================================================================
++
++create extension if not exists pg_net;
++
++create table if not exists public.push_subscriptions (
++  id              uuid primary key default gen_random_uuid(),
++  utilisateur_id  uuid not null references public.profils(id) on delete cascade,
++  endpoint        text not null unique,
++  p256dh          text not null,
++  auth            text not null,
++  created_at      timestamptz not null default now()
++);
++
++alter table public.push_subscriptions enable row level security;
++
++do $$ begin
++  if not exists (
++    select 1 from pg_policies where tablename = 'push_subscriptions' and policyname = 'utilisateur_gere_son_abonnement'
++  ) then
++    create policy "utilisateur_gere_son_abonnement" on public.push_subscriptions for all
++      using (auth.uid() = utilisateur_id)
++      with check (auth.uid() = utilisateur_id);
++  end if;
++end $$;
++
++-- ----------------------------------------------------------------------------
++-- Déclencheur : appelle l'Edge Function en tâche de fond (pg_net), sans
++-- bloquer l'ouverture/fermeture de session si l'appel HTTP est lent.
++-- La clé "anon" utilisée ici n'est pas secrète (c'est la clé publique
++-- publishable du projet) — sans risque à laisser dans le SQL.
++-- ----------------------------------------------------------------------------
++create or replace function public.fn_notifier_session_caisse()
++returns trigger as $$
++declare
++  v_payload jsonb;
++begin
++  if tg_op = 'INSERT' then
++    v_payload := jsonb_build_object(
++      'type', 'ouverture',
++      'session_id', new.id,
++      'utilisateur_id', new.utilisateur_id,
++      'montant_ouverture', new.montant_ouverture,
++      'date_ouverture', new.date_ouverture
++    );
++  elsif tg_op = 'UPDATE' and new.statut = 'fermee' and old.statut is distinct from 'fermee' then
++    v_payload := jsonb_build_object(
++      'type', 'fermeture',
++      'session_id', new.id,
++      'utilisateur_id', new.utilisateur_id,
++      'montant_theorique', new.montant_theorique,
++      'montant_fermeture_declare', new.montant_fermeture_declare,
++      'ecart', new.ecart,
++      'date_fermeture', new.date_fermeture
++    );
++  else
++    return new;
++  end if;
++
++  perform net.http_post(
++    url := 'https://mdzxitzgzndpuxobjqcq.supabase.co/functions/v1/notifier-session-caisse',
++    headers := jsonb_build_object(
++      'Content-Type', 'application/json',
++      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kenhpdHpnem5kcHV4b2JqcWNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MDA4ODQsImV4cCI6MjEwMDQ3Njg4NH0.b-eX42FzrcfBMnJWnpqx5eQPfVuPaXSui1wQbCEm9PA'
++    ),
++    body := v_payload
++  );
++
++  return new;
++end;
++$$ language plpgsql security definer set search_path = public, pg_temp, net;
++
++drop trigger if exists trg_notifier_session_ouverture on public.sessions_caisse;
++create trigger trg_notifier_session_ouverture
++  after insert on public.sessions_caisse
++  for each row execute function public.fn_notifier_session_caisse();
++
++drop trigger if exists trg_notifier_session_fermeture on public.sessions_caisse;
++create trigger trg_notifier_session_fermeture
++  after update on public.sessions_caisse
++  for each row execute function public.fn_notifier_session_caisse();
+diff --git a/supabase/functions/notifier-session-caisse/index.ts b/supabase/functions/notifier-session-caisse/index.ts
+new file mode 100644
+index 0000000..733026c
+--- /dev/null
++++ b/supabase/functions/notifier-session-caisse/index.ts
+@@ -0,0 +1,130 @@
++// Edge Function : notifier-session-caisse
++//
++// Appelée par un trigger Postgres (pg_net) à l'ouverture et à la fermeture
++// d'une session de caisse. Envoie une vraie notification push (navigateur/
++// téléphone, via le protocole Web Push standard — pas de SMS/WhatsApp,
++// aucun coût par message) à tous les comptes "propriétaire" abonnés.
++
++import { createClient } from "npm:@supabase/supabase-js@2";
++import webpush from "npm:web-push@3";
++
++const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
++const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
++const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
++const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
++
++webpush.setVapidDetails(
++  "mailto:contact@lime-electronique.example",
++  VAPID_PUBLIC_KEY,
++  VAPID_PRIVATE_KEY
++);
++
++function formaterFCFA(montant: number | null): string {
++  if (montant === null || montant === undefined) return "0 FCFA";
++  return Math.round(montant).toLocaleString("fr-FR") + " FCFA";
++}
++
++function construireMessage(payload: any): { title: string; body: string; urgent: boolean } {
++  if (payload.type === "ouverture") {
++    return {
++      title: "Lime-électronique — Session ouverte",
++      body: `Fonds initial : ${formaterFCFA(payload.montant_ouverture)}.`,
++      urgent: false,
++    };
++  }
++
++  // fermeture
++  const ecart = Number(payload.ecart ?? 0);
++  if (ecart < 0) {
++    return {
++      title: "⚠ Lime-électronique — Écart de caisse NÉGATIF",
++      body: `Théorique ${formaterFCFA(payload.montant_theorique)}, compté ${formaterFCFA(
++        payload.montant_fermeture_declare
++      )} — manque ${formaterFCFA(Math.abs(ecart))}.`,
++      urgent: true,
++    };
++  }
++  return {
++    title: "Lime-électronique — Session fermée",
++    body: `Écart : ${formaterFCFA(ecart)}. Théorique ${formaterFCFA(payload.montant_theorique)}, compté ${formaterFCFA(
++      payload.montant_fermeture_declare
++    )}.`,
++    urgent: false,
++  };
++}
++
++Deno.serve(async (req: Request) => {
++  try {
++    const payload = await req.json();
++    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
++
++    // Cible : tous les comptes propriétaire (pas seulement celui qui a
++    // ouvert/fermé la session, pour couvrir le cas où un caissier agit).
++    const { data: proprietaires, error: errProprios } = await supabase
++      .from("profils")
++      .select("id")
++      .eq("role", "proprietaire");
++
++    if (errProprios) throw errProprios;
++    const ids = (proprietaires ?? []).map((p) => p.id);
++    if (ids.length === 0) {
++      return new Response(JSON.stringify({ ok: true, envoyes: 0, raison: "aucun propriétaire" }), { status: 200 });
++    }
++
++    const { data: abonnements, error: errAbos } = await supabase
++      .from("push_subscriptions")
++      .select("id, endpoint, p256dh, auth")
++      .in("utilisateur_id", ids);
++
++    if (errAbos) throw errAbos;
++    if (!abonnements || abonnements.length === 0) {
++      return new Response(JSON.stringify({ ok: true, envoyes: 0, raison: "aucun abonnement" }), { status: 200 });
++    }
++
++    const { title, body, urgent } = construireMessage(payload);
++    const notifPayload = JSON.stringify({
++      title,
++      body,
++      url: "/session-caisse",
++      urgent,
++    });
++
++    let envoyes = 0;
++    const abonnementsExpires: string[] = [];
++
++    await Promise.all(
++      abonnements.map(async (abo) => {
++        try {
++          await webpush.sendNotification(
++            {
++              endpoint: abo.endpoint,
++              keys: { p256dh: abo.p256dh, auth: abo.auth },
++            },
++            notifPayload
++          );
++          envoyes++;
++        } catch (err: any) {
++          // 404/410 = l'abonnement n'est plus valide côté navigateur (app
++          // désinstallée, permission retirée...) — on le nettoie.
++          if (err?.statusCode === 404 || err?.statusCode === 410) {
++            abonnementsExpires.push(abo.id);
++          }
++        }
++      })
++    );
++
++    if (abonnementsExpires.length > 0) {
++      await supabase.from("push_subscriptions").delete().in("id", abonnementsExpires);
++    }
++
++    return new Response(JSON.stringify({ ok: true, envoyes, nettoyes: abonnementsExpires.length }), {
++      status: 200,
++      headers: { "Content-Type": "application/json" },
++    });
++  } catch (err: any) {
++    return new Response(JSON.stringify({ ok: false, error: String(err?.message ?? err) }), {
++      status: 500,
++      headers: { "Content-Type": "application/json" },
++    });
++  }
++});
+diff --git a/tsconfig.json b/tsconfig.json
+index fba2bf3..1a046db 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -17,5 +17,5 @@
+     "paths": { "@/*": ["./src/*"] }
+   },
+   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+-  "exclude": ["node_modules"]
++  "exclude": ["node_modules", "supabase/functions"]
+ }
