@@ -78,7 +78,7 @@ export default async function RapportsPage() {
       <h1 className="text-lg font-semibold text-accent">Rapports &amp; Analytics</h1>
       <p className="text-xs text-gray-400 italic">FR-29 et au-delà — vue d&apos;ensemble des performances</p>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white border border-gray-200 rounded p-4">
           <div className="text-[10px] uppercase tracking-wide text-gray-400">CA total (6 mois)</div>
           <div className="text-lg font-semibold">{caTotal.toLocaleString("fr-FR")} FCFA</div>
@@ -100,7 +100,7 @@ export default async function RapportsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white border border-gray-200 rounded p-4">
           <h2 className="text-sm font-semibold mb-2">Chiffre d&apos;affaires — 6 derniers mois</h2>
           <EvolutionCA data={evolutionCA} />

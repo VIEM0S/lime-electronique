@@ -7,7 +7,7 @@ import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import type { Article } from "@/types/database.types";
 
-const CATEGORIES = [
+const CATEGORIES_SUGGEREES = [
   "Bureaux & mobilier de bureau",
   "Meubles maison",
   "Informatique",
@@ -15,11 +15,13 @@ const CATEGORIES = [
   "Autre",
 ];
 
+const NOUVELLE_CATEGORIE = "__nouvelle__";
+
 const VIDE = {
   code_article: "",
   nom: "",
   description: "",
-  categorie: CATEGORIES[0],
+  categorie: CATEGORIES_SUGGEREES[0],
   prix_achat: "",
   prix_vente: "",
   quantite_stock: "",
@@ -41,6 +43,27 @@ export default function ArticleModal({
   const [form, setForm] = useState(VIDE);
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
+  const [categoriesExistantes, setCategoriesExistantes] = useState<string[]>([]);
+  const [nouvelleCategorieTexte, setNouvelleCategorieTexte] = useState("");
+  const [saisieNouvelleCategorie, setSaisieNouvelleCategorie] = useState(false);
+
+  // Catégories réellement utilisées dans le catalogue + les suggestions de
+  // base, pour proposer d'abord ce que l'utilisateur a déjà créé.
+  useEffect(() => {
+    if (!open) return;
+    supabase
+      .from("articles")
+      .select("categorie")
+      .not("categorie", "is", null)
+      .then(({ data }) => {
+        const existantes = Array.from(new Set((data ?? []).map((a) => a.categorie).filter(Boolean))) as string[];
+        setCategoriesExistantes(existantes.sort((a, b) => a.localeCompare(b)));
+      });
+  }, [open]);
+
+  const optionsCategorie = Array.from(
+    new Set([...categoriesExistantes, ...CATEGORIES_SUGGEREES])
+  );
 
   useEffect(() => {
     if (article) {
@@ -48,7 +71,7 @@ export default function ArticleModal({
         code_article: article.code_article,
         nom: article.nom,
         description: article.description ?? "",
-        categorie: article.categorie ?? CATEGORIES[0],
+        categorie: article.categorie ?? CATEGORIES_SUGGEREES[0],
         prix_achat: article.prix_achat != null ? String(article.prix_achat) : "",
         prix_vente: String(article.prix_vente),
         quantite_stock: String(article.quantite_stock),
@@ -56,6 +79,8 @@ export default function ArticleModal({
     } else {
       setForm(VIDE);
     }
+    setSaisieNouvelleCategorie(false);
+    setNouvelleCategorieTexte("");
     setErreur(null);
   }, [article, open]);
 
@@ -65,13 +90,17 @@ export default function ArticleModal({
       setErreur("Code, nom et prix de vente sont obligatoires.");
       return;
     }
+    if (saisieNouvelleCategorie && !nouvelleCategorieTexte.trim()) {
+      setErreur("Donne un nom à la nouvelle catégorie, ou reviens à la liste existante.");
+      return;
+    }
 
     setEnvoi(true);
     const payload = {
       code_article: form.code_article.trim(),
       nom: form.nom.trim(),
       description: form.description.trim() || null,
-      categorie: form.categorie,
+      categorie: saisieNouvelleCategorie ? nouvelleCategorieTexte.trim() : form.categorie,
       prix_achat: form.prix_achat ? Number(form.prix_achat) : null,
       prix_vente: Number(form.prix_vente),
       quantite_stock: Number(form.quantite_stock) || 0,
@@ -105,15 +134,45 @@ export default function ArticleModal({
             />
           </Field>
           <Field label="Catégorie">
-            <select
-              value={form.categorie}
-              onChange={(e) => setForm((f) => ({ ...f, categorie: e.target.value }))}
-              className="input"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            {saisieNouvelleCategorie ? (
+              <div className="flex gap-1.5">
+                <input
+                  value={nouvelleCategorieTexte}
+                  onChange={(e) => setNouvelleCategorieTexte(e.target.value)}
+                  className="input"
+                  placeholder="Ex: Quincaillerie"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSaisieNouvelleCategorie(false);
+                    setNouvelleCategorieTexte("");
+                  }}
+                  className="text-[11px] text-ink/40 hover:text-ink whitespace-nowrap px-1"
+                  title="Revenir à la liste"
+                >
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <select
+                value={form.categorie}
+                onChange={(e) => {
+                  if (e.target.value === NOUVELLE_CATEGORIE) {
+                    setSaisieNouvelleCategorie(true);
+                  } else {
+                    setForm((f) => ({ ...f, categorie: e.target.value }));
+                  }
+                }}
+                className="input"
+              >
+                {optionsCategorie.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                <option value={NOUVELLE_CATEGORIE}>+ Nouvelle catégorie...</option>
+              </select>
+            )}
           </Field>
         </div>
 

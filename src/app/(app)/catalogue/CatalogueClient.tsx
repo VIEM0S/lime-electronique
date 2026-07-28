@@ -94,7 +94,8 @@ export default function CatalogueClient({
       </div>
 
       <div className="bg-white border border-ink/10 rounded-lg overflow-hidden">
-        <table className="w-full text-xs">
+        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+<table className="w-full text-xs">
           <thead className="bg-ink/[0.03] text-ink/40 text-left">
             <tr>
               <th className="p-2.5">Code</th>
@@ -155,12 +156,14 @@ export default function CatalogueClient({
             ))}
           </tbody>
         </table>
+</div>
       </div>
 
       <div className="bg-white border border-ink/10 rounded-lg p-4">
         <h2 className="text-sm font-display font-semibold mb-1">Mouvements de stock récents</h2>
         <p className="text-xs text-ink/40 italic mb-2">FR-07 — historique des entrées/sorties</p>
-        <table className="w-full text-xs">
+        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+<table className="w-full text-xs">
           <thead className="text-ink/40 text-left">
             <tr><th className="py-1">Date</th><th>Article</th><th>Type</th><th>Qté</th><th>Motif</th></tr>
           </thead>
@@ -187,6 +190,7 @@ export default function CatalogueClient({
             ))}
           </tbody>
         </table>
+</div>
       </div>
 
       <ArticleModal

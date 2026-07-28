@@ -32,7 +32,9 @@ export default function UtilisateursClient({
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-display font-semibold text-ink">Gestion des utilisateurs</h1>
-        <p className="text-xs text-ink/40 italic">FR-22 à FR-22quater</p>
+        <p className="text-xs text-ink/40 italic">
+          FR-22 à FR-22quater — création des comptes réservée à Supabase (Authentication → Users)
+        </p>
       </div>
 
       <input
@@ -43,36 +45,38 @@ export default function UtilisateursClient({
       />
 
       <div className="bg-white border border-ink/10 rounded-lg overflow-hidden">
-        <table className="w-full text-xs">
-          <thead className="bg-ink/[0.03] text-ink/40 text-left">
-            <tr><th className="p-2.5">Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr>
-          </thead>
-          <tbody>
-            {filtres.map((u) => (
-              <tr key={u.id} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
-                <td className="p-2.5">{u.nom}</td>
-                <td className="text-ink/50">{emailsParId[u.id] ?? "—"}</td>
-                <td className="capitalize">{u.role}</td>
-                <td>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                    u.actif ? "bg-ok/10 text-ok" : "bg-ink/10 text-ink/50"
-                  }`}>
-                    {u.actif ? "Actif" : "Désactivé"}
-                  </span>
-                </td>
-                <td className="pr-2.5 text-right">
-                  <button onClick={() => setUtilisateurEdite(u)}
-                    className="inline-flex items-center gap-1 text-ink/40 hover:text-lime-deep text-[11px] font-semibold">
-                    <Pencil size={12} /> Modifier / mot de passe
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {filtres.length === 0 && (
-              <tr><td colSpan={5} className="p-4 text-center text-ink/30">Aucun utilisateur trouvé.</td></tr>
-            )}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-ink/[0.03] text-ink/40 text-left">
+              <tr><th className="p-2.5">Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr>
+            </thead>
+            <tbody>
+              {filtres.map((u) => (
+                <tr key={u.id} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
+                  <td className="p-2.5">{u.nom}</td>
+                  <td className="text-ink/50">{emailsParId[u.id] ?? "—"}</td>
+                  <td className="capitalize">{u.role}</td>
+                  <td>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                      u.actif ? "bg-ok/10 text-ok" : "bg-ink/10 text-ink/50"
+                    }`}>
+                      {u.actif ? "Actif" : "Désactivé"}
+                    </span>
+                  </td>
+                  <td className="pr-2.5 text-right">
+                    <button onClick={() => setUtilisateurEdite(u)}
+                      className="inline-flex items-center gap-1 text-ink/40 hover:text-lime-deep text-[11px] font-semibold">
+                      <Pencil size={12} /> Modifier / mot de passe
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filtres.length === 0 && (
+                <tr><td colSpan={5} className="p-4 text-center text-ink/30">Aucun utilisateur trouvé.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <ModifierUtilisateurModal

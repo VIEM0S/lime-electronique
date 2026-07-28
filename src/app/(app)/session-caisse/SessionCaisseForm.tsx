@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { SessionCaisse } from "@/types/database.types";
 
@@ -9,15 +10,15 @@ const LABEL_MODE: Record<string, string> = {
   especes: "Espèces",
   mobile_money: "Mobile Money",
   virement: "Virement",
-  credit: "Crédit (non encaissé)",
+  credit: "Crédit",
 };
 
 export default function SessionCaisseForm({
   sessionOuverte,
-  paiementsSession = [],
+  repartitionParMode,
 }: {
   sessionOuverte: SessionCaisse | null;
-  paiementsSession?: { mode: string; montant: number }[];
+  repartitionParMode: { mode: string; montant: number }[];
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -42,7 +43,6 @@ export default function SessionCaisseForm({
 
     setEnvoi(false);
     if (error) {
-      // ex. contrainte idx_sessions_caisse_une_ouverte si une session est déjà ouverte
       setErreur(error.message);
       return;
     }
@@ -85,6 +85,15 @@ export default function SessionCaisseForm({
           Écart : <b>{ecart > 0 ? "+" : ""}{ecart.toLocaleString("fr-FR")} FCFA</b>
           {ecart === 0 ? " (caisse juste)" : ecart > 0 ? " (excédent)" : " (manque)"}
         </p>
+        {ecart < 0 && (
+          <div className="flex items-start gap-2 bg-signal/5 border border-signal/20 rounded-md p-2.5 mt-2 text-signal">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+            <span>
+              Écart négatif — signale-le au propriétaire. Compare avec la répartition par mode
+              ci-dessus (une confusion espèces/Mobile Money est la cause la plus fréquente).
+            </span>
+          </div>
+        )}
       </div>
     );
   }
@@ -110,6 +119,10 @@ export default function SessionCaisseForm({
         >
           {envoi ? "Ouverture..." : "Ouvrir la session"}
         </button>
+        <p className="text-[10px] text-ink/40">
+          Chaque compte (propriétaire, caisse...) a sa propre session, indépendante des autres —
+          ouvrir la tienne n&apos;ouvre pas celle d&apos;un collègue, et inversement.
+        </p>
       </div>
     );
   }
@@ -121,35 +134,35 @@ export default function SessionCaisseForm({
         {Number(sessionOuverte.montant_ouverture).toLocaleString("fr-FR")} FCFA
       </p>
 
-      {paiementsSession.length > 0 && (() => {
-        const parMode: Record<string, number> = {};
-        paiementsSession.forEach((p) => {
-          parMode[p.mode] = (parMode[p.mode] ?? 0) + Number(p.montant);
-        });
-        const especesAttendu = Number(sessionOuverte.montant_ouverture) + (parMode.especes ?? 0);
-        return (
-          <div className="bg-ink/[0.03] rounded-md p-3 space-y-1">
-            <p className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1">
-              Ventes de cette session — pour justificatif de l&apos;écart
-            </p>
-            {Object.entries(parMode).map(([mode, montant]) => (
-              <div key={mode} className="flex justify-between text-xs">
-                <span className={mode === "credit" ? "text-ink/40 italic" : "text-ink/60"}>
-                  {LABEL_MODE[mode] ?? mode}
-                </span>
-                <span className="num">{montant.toLocaleString("fr-FR")} FCFA</span>
+      {repartitionParMode.length > 0 && (
+        <div className="bg-ink/[0.03] rounded-md p-3">
+          <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1.5">
+            Ventes de cette session, par mode
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {repartitionParMode.map((r) => (
+              <div key={r.mode} className="text-xs">
+                <div className="text-ink/40">{LABEL_MODE[r.mode] ?? r.mode}</div>
+                <div className="num font-semibold">{r.montant.toLocaleString("fr-FR")} FCFA</div>
               </div>
             ))}
-            <div className="border-t border-ink/10 mt-1 pt-1 flex justify-between text-xs font-semibold">
-              <span>Espèces attendues en caisse</span>
-              <span className="num">{especesAttendu.toLocaleString("fr-FR")} FCFA</span>
-            </div>
-            <p className="text-[10px] text-ink/40 italic">
-              (fonds initial + espèces encaissées — le crédit et les paiements électroniques ne sont pas du liquide)
-            </p>
           </div>
-        );
-      })()}
+          <div className="border-t border-ink/10 mt-2 pt-2 flex justify-between text-xs font-semibold">
+            <span>Espèces attendues en caisse</span>
+            <span className="num">
+              {(
+                Number(sessionOuverte.montant_ouverture) +
+                (repartitionParMode.find((r) => r.mode === "especes")?.montant ?? 0)
+              ).toLocaleString("fr-FR")}{" "}
+              FCFA
+            </span>
+          </div>
+          <p className="text-[10px] text-ink/35 mt-1.5">
+            Seules les espèces comptent dans le calcul de l&apos;écart théorique — les autres modes
+            sont affichés ici à titre de justificatif seulement.
+          </p>
+        </div>
+      )}
 
       <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">
         Montant compté physiquement (fermeture)

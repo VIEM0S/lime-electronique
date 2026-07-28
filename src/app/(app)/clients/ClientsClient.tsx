@@ -44,52 +44,54 @@ export default function ClientsClient({ clients }: { clients: Client[] }) {
       />
 
       <div className="bg-white border border-ink/10 rounded-lg overflow-hidden">
-        <table className="w-full text-xs">
-          <thead className="bg-ink/[0.03] text-ink/40 text-left">
-            <tr>
-              <th className="p-2.5">Client</th>
-              <th>Téléphone</th>
-              <th>Quartier</th>
-              <th>Solde dû</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtres.length === 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-ink/[0.03] text-ink/40 text-left">
               <tr>
-                <td colSpan={5} className="p-6 text-center text-ink/30 italic">
-                  Aucun client trouvé.
-                </td>
+                <th className="p-2.5">Client</th>
+                <th>Téléphone</th>
+                <th>Quartier</th>
+                <th>Solde dû</th>
+                <th></th>
               </tr>
-            )}
-            {filtres.map((c) => (
-              <tr key={c.id} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
-                <td className="p-2.5">{c.nom}</td>
-                <td className="text-ink/50">{c.telephone ?? "—"}</td>
-                <td className="text-ink/50">{c.quartier ?? "—"}</td>
-                <td className={`num ${Number(c.solde_du) > 0 ? "text-ember font-semibold" : "text-ink/40"}`}>
-                  {Number(c.solde_du).toLocaleString("fr-FR")} FCFA
-                </td>
-                <td className="pr-2.5 text-right space-x-3 whitespace-nowrap">
-                  <button
-                    onClick={() => setClientEdite(c)}
-                    className="inline-flex items-center gap-1 text-ink/40 hover:text-lime-deep text-[11px] font-semibold"
-                  >
-                    <Pencil size={12} /> Modifier
-                  </button>
-                  {Number(c.solde_du) > 0 && (
+            </thead>
+            <tbody>
+              {filtres.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-ink/30 italic">
+                    Aucun client trouvé.
+                  </td>
+                </tr>
+              )}
+              {filtres.map((c) => (
+                <tr key={c.id} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
+                  <td className="p-2.5">{c.nom}</td>
+                  <td className="text-ink/50">{c.telephone ?? "—"}</td>
+                  <td className="text-ink/50">{c.quartier ?? "—"}</td>
+                  <td className={`num ${Number(c.solde_du) > 0 ? "text-ember font-semibold" : "text-ink/40"}`}>
+                    {Number(c.solde_du).toLocaleString("fr-FR")} FCFA
+                  </td>
+                  <td className="pr-2.5 text-right space-x-3 whitespace-nowrap">
                     <button
-                      onClick={() => setClientPaiement(c)}
-                      className="inline-flex items-center gap-1 text-lime-deep hover:text-ink text-[11px] font-semibold"
+                      onClick={() => setClientEdite(c)}
+                      className="inline-flex items-center gap-1 text-ink/40 hover:text-lime-deep text-[11px] font-semibold"
                     >
-                      <Wallet size={12} /> Paiement
+                      <Pencil size={12} /> Modifier
                     </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    {Number(c.solde_du) > 0 && (
+                      <button
+                        onClick={() => setClientPaiement(c)}
+                        className="inline-flex items-center gap-1 text-lime-deep hover:text-ink text-[11px] font-semibold"
+                      >
+                        <Wallet size={12} /> Paiement
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <PaiementModal

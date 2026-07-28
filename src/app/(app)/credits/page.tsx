@@ -31,7 +31,7 @@ export default async function CreditsPage() {
         Détail par vente à crédit — limite, échéance et statut (cf. Clients &amp; créances pour le solde global)
       </p>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border border-gray-200 rounded p-4">
           <div className="text-[10px] uppercase tracking-wide text-gray-400">Total en cours</div>
           <div className="text-lg font-semibold">{totalEnCours.toLocaleString("fr-FR")} FCFA</div>
@@ -48,7 +48,8 @@ export default async function CreditsPage() {
 
       <div className="bg-white border border-gray-200 rounded overflow-hidden">
         {credits && credits.length > 0 ? (
-          <table className="w-full text-xs">
+          <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+<table className="w-full text-xs">
             <thead className="bg-gray-50 text-gray-500 text-left">
               <tr>
                 <th className="p-2">Client</th>
@@ -87,6 +88,7 @@ export default async function CreditsPage() {
               })}
             </tbody>
           </table>
+</div>
         ) : (
           <div className="text-center py-10 text-gray-400">
             <p className="text-sm">Aucun crédit en cours</p>

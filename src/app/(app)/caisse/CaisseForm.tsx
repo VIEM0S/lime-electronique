@@ -221,29 +221,31 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
               Le panier est vide — recherchez un article ci-dessus
             </div>
           ) : (
-            <table className="w-full text-xs">
-              <thead className="bg-ink/[0.03] text-ink/40 text-left">
-                <tr><th className="p-2.5">Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>
-              </thead>
-              <tbody>
-                {lignes.map((l) => (
-                  <tr key={l.article.id} className="border-t border-ink/5">
-                    <td className="p-2.5">{l.article.code_article} — {l.article.nom}</td>
-                    <td>
-                      <input
-                        type="number"
-                        min={1}
-                        value={l.quantite}
-                        onChange={(e) => majQuantite(l.article.id, Number(e.target.value))}
-                        className="w-14 border border-ink/15 rounded px-1.5 py-0.5 num"
-                      />
-                    </td>
-                    <td className="num">{l.article.prix_vente.toLocaleString("fr-FR")} FCFA</td>
-                    <td className="num font-semibold">{(l.quantite * l.article.prix_vente).toLocaleString("fr-FR")} FCFA</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+              <table className="w-full text-xs">
+                <thead className="bg-ink/[0.03] text-ink/40 text-left">
+                  <tr><th className="p-2.5">Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                  {lignes.map((l) => (
+                    <tr key={l.article.id} className="border-t border-ink/5">
+                      <td className="p-2.5">{l.article.code_article} — {l.article.nom}</td>
+                      <td>
+                        <input
+                          type="number"
+                          min={1}
+                          value={l.quantite}
+                          onChange={(e) => majQuantite(l.article.id, Number(e.target.value))}
+                          className="w-14 border border-ink/15 rounded px-1.5 py-0.5 num"
+                        />
+                      </td>
+                      <td className="num">{l.article.prix_vente.toLocaleString("fr-FR")} FCFA</td>
+                      <td className="num font-semibold">{(l.quantite * l.article.prix_vente).toLocaleString("fr-FR")} FCFA</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

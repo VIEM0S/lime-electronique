@@ -57,7 +57,8 @@ export default function VentesRecentes({ ventes, peutAnnuler }: { ventes: VenteL
   return (
     <div className="bg-white border border-ink/10 rounded-lg p-4">
       <h2 className="text-sm font-display font-semibold mb-2">Ventes récentes</h2>
-      <table className="w-full text-xs">
+      <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+<table className="w-full text-xs">
         <thead className="text-ink/40 text-left">
           <tr><th className="py-1">Facture</th><th>Date</th><th>Montant</th><th>Statut</th><th></th></tr>
         </thead>
@@ -106,6 +107,7 @@ export default function VentesRecentes({ ventes, peutAnnuler }: { ventes: VenteL
           ))}
         </tbody>
       </table>
+</div>
       {erreur && <p className="text-xs text-signal mt-2">{erreur}</p>}
     </div>
   );
