@@ -13,6 +13,21 @@ type ClientLite = { id: string; nom: string; telephone: string | null };
 
 type Ligne = { article: ArticleLite; quantite: number };
 
+// `navigator.onLine` ment souvent (il dit "en ligne" dès qu'une interface
+// réseau existe, même sans accès réel à internet) — donc on ne peut pas
+// s'y fier seul. Ce détecteur repère les erreurs réseau réelles (requête
+// qui n'a même pas atteint le serveur), pour distinguer "vraiment hors
+// ligne, il faut mettre en file d'attente" de "le serveur a refusé pour
+// une vraie raison métier (stock insuffisant, etc.), il faut le dire".
+function estErreurReseau(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  return /failed to fetch|networkerror|load failed|network request failed|ERR_INTERNET_DISCONNECTED|ERR_NETWORK|ERR_CONNECTION/i.test(msg);
+}
+
+function attendre(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 const MODES: { key: ModePaiement; label: string }[] = [
   { key: "especes", label: "Espèces" },
   { key: "mobile_money", label: "Mobile Money" },
@@ -98,9 +113,12 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
     setEnvoi(true);
 
-    // Mode hors-ligne (FR-25/SSD UC-08) : on ne tente même pas le réseau,
-    // on met directement en file d'attente locale.
-    if (!estEnLigne()) {
+    const paiementsAEnvoyer = MODES.filter((m) => montants[m.key] > 0).map((m) => ({
+      mode: m.key,
+      montant: montants[m.key],
+    }));
+
+    async function basculerHorsLigne() {
       const action = await mettreEnFileVente({
         client_id: clientId || null,
         lignes: lignes.map((l) => ({
@@ -108,10 +126,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           quantite: l.quantite,
           prix_unitaire: l.article.prix_vente,
         })),
-        paiements: MODES.filter((m) => montants[m.key] > 0).map((m) => ({
-          mode: m.key,
-          montant: montants[m.key],
-        })),
+        paiements: paiementsAEnvoyer,
       });
       setEnvoi(false);
       setResultat({ numero_facture: action.numeroProvisoire, statut: "en attente de synchronisation", horsLigne: true });
@@ -119,9 +134,15 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
         lignes,
         total,
         clientNom: clients.find((c) => c.id === clientId)?.nom ?? null,
-        paiements: MODES.filter((m) => montants[m.key] > 0).map((m) => ({ mode: m.key, montant: montants[m.key] })),
+        paiements: paiementsAEnvoyer,
       });
       reinitialiser();
+    }
+
+    // Mode hors-ligne (FR-25/SSD UC-08) : on ne tente même pas le réseau,
+    // on met directement en file d'attente locale.
+    if (!estEnLigne()) {
+      await basculerHorsLigne();
       return;
     }
 
@@ -129,61 +150,89 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       data: { user },
     } = await supabase.auth.getUser();
 
-    const { data: vente, error: erreurVente } = await supabase
-      .from("ventes")
-      .insert({ client_id: clientId || null, utilisateur_id: user?.id ?? null })
-      .select()
-      .single();
+    let venteId: string | null = null;
+    try {
+      const { data: vente, error: erreurVente } = await supabase
+        .from("ventes")
+        .insert({ client_id: clientId || null, utilisateur_id: user?.id ?? null })
+        .select()
+        .single();
 
-    if (erreurVente || !vente) {
-      setEnvoi(false);
-      setErreur(erreurVente?.message ?? "Erreur lors de la création de la vente.");
-      return;
-    }
-
-    for (const l of lignes) {
-      const { error: erreurLigne } = await supabase.from("ventes_lignes").insert({
-        vente_id: vente.id,
-        article_id: l.article.id,
-        quantite: l.quantite,
-        prix_unitaire: l.article.prix_vente,
-      });
-      if (erreurLigne) {
-        setEnvoi(false);
-        setErreur(erreurLigne.message);
-        return;
-      }
-    }
-
-    for (const mode of MODES) {
-      const montant = montants[mode.key];
-      if (montant > 0) {
-        const { error: erreurPaiement } = await supabase
-          .from("paiements")
-          .insert({ vente_id: vente.id, mode: mode.key, montant });
-        if (erreurPaiement) {
-          setEnvoi(false);
-          setErreur(erreurPaiement.message);
+      if (erreurVente || !vente) {
+        // Rien n'a encore été créé : si c'est une vraie panne réseau (et pas
+        // un refus métier du serveur), on peut basculer sans rien perdre.
+        if (erreurVente && estErreurReseau(erreurVente)) {
+          await basculerHorsLigne();
           return;
         }
+        setEnvoi(false);
+        setErreur(erreurVente?.message ?? "Erreur lors de la création de la vente.");
+        return;
+      }
+      venteId = vente.id;
+
+      for (const l of lignes) {
+        const { error: erreurLigne } = await inserer(() =>
+          supabase.from("ventes_lignes").insert({
+            vente_id: venteId,
+            article_id: l.article.id,
+            quantite: l.quantite,
+            prix_unitaire: l.article.prix_vente,
+          })
+        );
+        if (erreurLigne) throw new Error(erreurLigne.message, { cause: erreurLigne });
+      }
+
+      for (const p of paiementsAEnvoyer) {
+        const { error: erreurPaiement } = await inserer(() =>
+          supabase.from("paiements").insert({ vente_id: venteId, mode: p.mode, montant: p.montant })
+        );
+        if (erreurPaiement) throw new Error(erreurPaiement.message, { cause: erreurPaiement });
+      }
+
+      const { data: venteFinale } = await supabase
+        .from("ventes")
+        .select("numero_facture, statut")
+        .eq("id", venteId)
+        .single();
+
+      setEnvoi(false);
+      setResultat({ ...(venteFinale ?? { numero_facture: vente.numero_facture, statut: "impayee" }), horsLigne: false });
+      setRecu({ lignes, total, clientNom: clients.find((c) => c.id === clientId)?.nom ?? null, paiements: paiementsAEnvoyer });
+      reinitialiser();
+    } catch (err) {
+      setEnvoi(false);
+      if (venteId) {
+        // La vente existe déjà côté serveur (son numéro de facture est réel) —
+        // on ne la remet PAS en file d'attente hors-ligne pour éviter de la
+        // dupliquer à la prochaine synchronisation. On informe clairement.
+        setErreur(
+          `Panne réseau après création partielle de la vente (déjà enregistrée côté serveur). ` +
+            `Vérifie "Ventes récentes" avant de ressaisir — ne recommence pas à zéro sans vérifier.`
+        );
+      } else if (estErreurReseau(err)) {
+        await basculerHorsLigne();
+      } else {
+        setErreur(err instanceof Error ? err.message : "Erreur inattendue lors de la vente.");
       }
     }
 
-    const { data: venteFinale } = await supabase
-      .from("ventes")
-      .select("numero_facture, statut")
-      .eq("id", vente.id)
-      .single();
-
-    setEnvoi(false);
-    setResultat({ ...(venteFinale ?? { numero_facture: vente.numero_facture, statut: "impayee" }), horsLigne: false });
-    setRecu({
-      lignes,
-      total,
-      clientNom: clients.find((c) => c.id === clientId)?.nom ?? null,
-      paiements: MODES.filter((m) => montants[m.key] > 0).map((m) => ({ mode: m.key, montant: montants[m.key] })),
-    });
-    reinitialiser();
+    // Retente une insertion 2 fois de plus avant d'abandonner (une coupure
+    // réseau très brève ne doit pas faire échouer toute la vente).
+    async function inserer<T>(fn: () => PromiseLike<T>): Promise<T> {
+      let derniereErreur: any;
+      for (let tentative = 0; tentative < 3; tentative++) {
+        try {
+          const res = await fn();
+          return res;
+        } catch (e) {
+          derniereErreur = e;
+          if (!estErreurReseau(e)) throw e;
+          await attendre(600);
+        }
+      }
+      throw derniereErreur;
+    }
   }
 
   return (

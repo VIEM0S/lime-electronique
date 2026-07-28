@@ -144,6 +144,8 @@ export interface SessionCaisse {
   montant_theorique: number | null;
   ecart: number | null;
   statut: StatutSessionCaisse;
+  // Fix 005 — commentaire optionnel expliquant l'écart, saisi à la fermeture
+  commentaire_fermeture: string | null;
 }
 
 // Squelette minimal compatible avec le typage générique de @supabase/ssr.
