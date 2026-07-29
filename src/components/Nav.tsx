@@ -80,7 +80,7 @@ export default function Nav({ role }: { role: Role }) {
       )}
 
       {/* Desktop (>= md) : barre horizontale classique */}
-      <nav className="hidden md:flex gap-1 bg-ink px-4 sm:px-6 overflow-x-auto">
+      <nav className="hidden md:flex gap-1 bg-ink border-t border-white/10 px-4 sm:px-6 overflow-x-auto">
         {links.map((l) => {
           const active = pathname === l.href;
           const Icon = l.icon;

@@ -112,7 +112,7 @@ export default function ModifierUtilisateurModal({
           Compte actif (décocher pour désactiver l&apos;accès)
         </label>
 
-        <div className="pt-2 border-t border-ink/10">
+        <div className="pt-2 border-t border-argent/25">
           <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
             Nouveau mot de passe (optionnel)
           </label>

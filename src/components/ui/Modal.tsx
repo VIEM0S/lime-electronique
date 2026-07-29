@@ -34,9 +34,9 @@ export default function Modal({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-white rounded-lg shadow-xl border border-ink/10 overflow-hidden"
+        className="w-full max-w-md bg-white rounded-lg shadow-xl border border-argent/25 overflow-hidden"
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-ink/10">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-argent/25">
           <h2 className="font-display font-semibold text-sm text-ink">{title}</h2>
           <button
             onClick={onClose}

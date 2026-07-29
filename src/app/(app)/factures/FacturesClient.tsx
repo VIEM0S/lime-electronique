@@ -93,10 +93,10 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
         />
       </div>
 
-      <div className="bg-white border border-ink/10 rounded-lg overflow-hidden">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="bg-ink/[0.03] text-ink/40 text-left">
+            <thead className="bg-argent/10 text-ink/40 text-left">
               <tr>
                 <th className="p-2.5">N° Facture</th>
                 <th>Date</th>
@@ -188,7 +188,7 @@ function ApercuRemboursement({ ligne }: { ligne: Ligne }) {
 
   return (
     <div className="space-y-3">
-      <div id="zone-impression" className="bg-white border border-ink/10 rounded-lg p-4 text-xs font-mono">
+      <div id="zone-impression" className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 text-xs font-mono">
         <div className="text-center mb-3">
           <div className="font-display font-semibold text-sm">Lime-électronique</div>
           <div className="text-ink/50">Reçu de paiement de créance</div>

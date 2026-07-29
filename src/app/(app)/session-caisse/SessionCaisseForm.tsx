@@ -79,7 +79,7 @@ export default function SessionCaisseForm({
   if (resultatFermeture) {
     const ecart = Number(resultatFermeture.ecart);
     return (
-      <div className="bg-white border border-ink/10 rounded-lg p-4 text-sm space-y-1">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 text-sm space-y-1">
         <p>Session fermée.</p>
         <p>Montant théorique : <b>{Number(resultatFermeture.montant_theorique).toLocaleString("fr-FR")} FCFA</b></p>
         <p>Montant compté : <b>{Number(resultatFermeture.montant_fermeture_declare).toLocaleString("fr-FR")} FCFA</b></p>
@@ -107,7 +107,7 @@ export default function SessionCaisseForm({
 
   if (!sessionOuverte) {
     return (
-      <div className="bg-white border border-ink/10 rounded-lg p-4 space-y-3">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 space-y-3">
         <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">
           Fonds de caisse initial
         </label>
@@ -122,7 +122,7 @@ export default function SessionCaisseForm({
         <button
           onClick={ouvrir}
           disabled={envoi}
-          className="bg-lime text-ink rounded-md py-2 px-4 text-sm font-semibold hover:bg-lime-deep transition-colors disabled:opacity-50"
+          className="bg-lime text-white rounded-md py-2 px-4 text-sm font-semibold hover:bg-lime-deep transition-colors disabled:opacity-50"
         >
           {envoi ? "Ouverture..." : "Ouvrir la session"}
         </button>
@@ -135,14 +135,14 @@ export default function SessionCaisseForm({
   }
 
   return (
-    <div className="bg-white border border-ink/10 rounded-lg p-4 space-y-3">
+    <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 space-y-3">
       <p className="text-xs text-ink/50">
         Session ouverte le {new Date(sessionOuverte.date_ouverture).toLocaleString("fr-FR")} — fonds initial :{" "}
         {Number(sessionOuverte.montant_ouverture).toLocaleString("fr-FR")} FCFA
       </p>
 
       {repartitionParMode.length > 0 && (
-        <div className="bg-ink/[0.03] rounded-md p-3">
+        <div className="bg-argent/10 rounded-md p-3">
           <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1.5">
             Ventes de cette session, par mode
           </div>
@@ -154,7 +154,7 @@ export default function SessionCaisseForm({
               </div>
             ))}
           </div>
-          <div className="border-t border-ink/10 mt-2 pt-2 flex justify-between text-xs font-semibold">
+          <div className="border-t border-argent/25 mt-2 pt-2 flex justify-between text-xs font-semibold">
             <span>Espèces attendues en caisse</span>
             <span className="num">
               {(
@@ -197,7 +197,7 @@ export default function SessionCaisseForm({
       <button
         onClick={fermer}
         disabled={envoi}
-        className="bg-lime text-ink rounded-md py-2 px-4 text-sm font-semibold hover:bg-lime-deep transition-colors disabled:opacity-50"
+        className="bg-lime text-white rounded-md py-2 px-4 text-sm font-semibold hover:bg-lime-deep transition-colors disabled:opacity-50"
       >
         {envoi ? "Fermeture..." : "Fermer la session"}
       </button>

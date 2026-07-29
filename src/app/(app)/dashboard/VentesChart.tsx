@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 
 export default function VentesChart({ data }: { data: { jour: string; total: number }[] }) {
   return (
-    <div className="bg-white border border-ink/10 rounded-lg p-4">
+    <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
       <h2 className="text-sm font-display font-semibold mb-3">Évolution des ventes (7 derniers jours)</h2>
       <ResponsiveContainer width="100%" height={180}>
         <AreaChart data={data} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
@@ -14,15 +14,15 @@ export default function VentesChart({ data }: { data: { jour: string; total: num
               <stop offset="100%" stopColor="#0050B0" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1E27330F" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2626260F" vertical={false} />
           <XAxis
             dataKey="jour"
-            tick={{ fontSize: 10, fill: "#1E273380" }}
-            axisLine={{ stroke: "#1E27331A" }}
+            tick={{ fontSize: 10, fill: "#26262680" }}
+            axisLine={{ stroke: "#2626261A" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: "#1E273380" }}
+            tick={{ fontSize: 10, fill: "#26262680" }}
             axisLine={false}
             tickLine={false}
             width={48}
@@ -33,7 +33,7 @@ export default function VentesChart({ data }: { data: { jour: string; total: num
             contentStyle={{
               fontSize: 12,
               fontFamily: "var(--font-body)",
-              border: "1px solid #1E27331A",
+              border: "1px solid #2626261A",
               borderRadius: 8,
             }}
           />

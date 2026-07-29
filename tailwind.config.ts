@@ -5,20 +5,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Identité Lime-électronique — bleu/gris du logo officiel du client
+        // Identité Lime-électronique — bleu/argent du logo officiel du client
         // (couleurs extraites du fichier logo vectoriel fourni le 29/07/2026).
-        ink: "#1E2733",
+        ink: "#262626",
         lime: {
           DEFAULT: "#0050B0",
           deep: "#083078",
           soft: "#E4ECFA",
         },
-        paper: "#F5F6F8",
+        // Argent — teinte du "L" métallique du logo, second ton de la marque
+        // (bordures, en-têtes de tableau, badges neutres) pour que "bleu ET
+        // argent" se voie partout, pas seulement sur l'icône.
+        argent: {
+          DEFAULT: "#9AA7B4",
+          deep: "#6B7684",
+          soft: "#EEF1F4",
+        },
+        paper: "#EDF0F4",
         ember: { DEFAULT: "#E2A33D", soft: "#FBF0DD" },
         signal: { DEFAULT: "#D14343", soft: "#FBE7E7" },
         ok: { DEFAULT: "#3F9142", soft: "#E4F3E4" },
         // Alias conservés pour compat pendant la migration progressive.
-        accent: "#1E2733",
+        accent: "#262626",
         accent2: "#0050B0",
       },
       fontFamily: {

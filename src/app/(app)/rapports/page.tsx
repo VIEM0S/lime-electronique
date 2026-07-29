@@ -75,44 +75,44 @@ export default async function RapportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold text-accent">Rapports &amp; Analytics</h1>
-      <p className="text-xs text-gray-400 italic">FR-29 et au-delà — vue d&apos;ensemble des performances</p>
+      <h1 className="text-lg font-display font-semibold text-ink">Rapports &amp; Analytics</h1>
+      <p className="text-xs text-ink/40 italic">FR-29 et au-delà — vue d&apos;ensemble des performances</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <div className="text-[10px] uppercase tracking-wide text-gray-400">CA total (6 mois)</div>
-          <div className="text-lg font-semibold">{caTotal.toLocaleString("fr-FR")} FCFA</div>
-          <div className="text-xs text-gray-400">{toutesLesVentes.length} vente(s)</div>
+        <div className="bg-white border border-argent/25 rounded-lg p-4">
+          <div className="text-[10px] uppercase tracking-wide text-ink/40">CA total (6 mois)</div>
+          <div className="text-lg font-display font-semibold num">{caTotal.toLocaleString("fr-FR")} FCFA</div>
+          <div className="text-xs text-ink/40">{toutesLesVentes.length} vente(s)</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <div className="text-[10px] uppercase tracking-wide text-gray-400">CA ce mois</div>
-          <div className="text-lg font-semibold">{caCeMois.toLocaleString("fr-FR")} FCFA</div>
+        <div className="bg-white border border-argent/25 rounded-lg p-4">
+          <div className="text-[10px] uppercase tracking-wide text-ink/40">CA ce mois</div>
+          <div className="text-lg font-display font-semibold num">{caCeMois.toLocaleString("fr-FR")} FCFA</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <div className="text-[10px] uppercase tracking-wide text-gray-400">Ticket moyen</div>
-          <div className="text-lg font-semibold">{Math.round(ticketMoyen).toLocaleString("fr-FR")} FCFA</div>
-          <div className="text-xs text-gray-400">par vente</div>
+        <div className="bg-white border border-argent/25 rounded-lg p-4">
+          <div className="text-[10px] uppercase tracking-wide text-ink/40">Ticket moyen</div>
+          <div className="text-lg font-display font-semibold num">{Math.round(ticketMoyen).toLocaleString("fr-FR")} FCFA</div>
+          <div className="text-xs text-ink/40">par vente</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <div className="text-[10px] uppercase tracking-wide text-gray-400">Clients actifs</div>
-          <div className="text-lg font-semibold">{clientsActifs}</div>
-          <div className="text-xs text-gray-400">sur {clients?.length ?? 0} au total</div>
+        <div className="bg-white border border-argent/25 rounded-lg p-4">
+          <div className="text-[10px] uppercase tracking-wide text-ink/40">Clients actifs</div>
+          <div className="text-lg font-display font-semibold num">{clientsActifs}</div>
+          <div className="text-xs text-ink/40">sur {clients?.length ?? 0} au total</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <h2 className="text-sm font-semibold mb-2">Chiffre d&apos;affaires — 6 derniers mois</h2>
+        <div className="bg-white border border-argent/25 rounded-lg p-4">
+          <h2 className="text-sm font-display font-semibold mb-2">Chiffre d&apos;affaires — 6 derniers mois</h2>
           <EvolutionCA data={evolutionCA} />
         </div>
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <h2 className="text-sm font-semibold mb-2">Modes de paiement</h2>
+        <div className="bg-white border border-argent/25 rounded-lg p-4">
+          <h2 className="text-sm font-display font-semibold mb-2">Modes de paiement</h2>
           <RepartitionModes data={repartitionModes} />
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded p-4">
-        <h2 className="text-sm font-semibold mb-2">Activité cette semaine</h2>
+      <div className="bg-white border border-argent/25 rounded-lg p-4">
+        <h2 className="text-sm font-display font-semibold mb-2">Activité cette semaine</h2>
         <ActiviteSemaine data={activiteSemaine} />
       </div>
     </div>

@@ -22,7 +22,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen">
-      <header className="bg-ink text-white px-4 sm:px-6 py-3 text-sm flex items-center justify-between">
+      <div className="h-[3px] bg-gradient-to-r from-lime via-[#4A78D6] to-lime-soft" />
+      <header className="bg-lime-deep text-white px-4 sm:px-6 py-3 text-sm flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span className="w-7 h-7 rounded-md overflow-hidden flex items-center justify-center bg-white shrink-0">
             <Image src="/icons/icon-192.png" alt="Lime-électronique" width={28} height={28} className="object-cover" />
@@ -33,7 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] bg-lime/15 text-lime rounded-full px-2.5 py-1 uppercase tracking-wide font-semibold">
+          <span className="text-[10px] bg-white/15 text-white rounded-full px-2.5 py-1 uppercase tracking-wide font-semibold">
             {profil.role}
           </span>
           <DeconnexionButton />

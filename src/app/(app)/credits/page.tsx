@@ -7,9 +7,9 @@ const LABEL_STATUT: Record<string, string> = {
   soldee: "Soldée",
 };
 const STYLE_STATUT: Record<string, string> = {
-  en_cours: "bg-gray-200 text-gray-600",
-  en_retard: "bg-red-100 text-red-700",
-  soldee: "bg-green-100 text-green-700",
+  en_cours: "bg-argent/15 text-argent-deep",
+  en_retard: "bg-signal/10 text-signal",
+  soldee: "bg-ok/10 text-ok",
 };
 
 export default async function CreditsPage() {
@@ -26,31 +26,31 @@ export default async function CreditsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold text-accent">Crédits clients</h1>
-      <p className="text-xs text-gray-400 italic">
+      <h1 className="text-lg font-display font-semibold text-ink">Crédits clients</h1>
+      <p className="text-xs text-ink/40 italic">
         Détail par vente à crédit — limite, échéance et statut (cf. Clients &amp; créances pour le solde global)
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <div className="text-[10px] uppercase tracking-wide text-gray-400">Total en cours</div>
-          <div className="text-lg font-semibold">{totalEnCours.toLocaleString("fr-FR")} FCFA</div>
+        <div className="bg-white border border-argent/25 rounded-lg p-4">
+          <div className="text-[10px] uppercase tracking-wide text-ink/40">Total en cours</div>
+          <div className="text-lg font-display font-semibold num">{totalEnCours.toLocaleString("fr-FR")} FCFA</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded p-4">
-          <div className="text-[10px] uppercase tracking-wide text-gray-400">Crédits actifs</div>
-          <div className="text-lg font-semibold">{enCours.length}</div>
+        <div className="bg-white border border-argent/25 rounded-lg p-4">
+          <div className="text-[10px] uppercase tracking-wide text-ink/40">Crédits actifs</div>
+          <div className="text-lg font-display font-semibold num">{enCours.length}</div>
         </div>
-        <div className={`rounded p-4 border ${enRetard.length > 0 ? "bg-red-50 border-red-200" : "bg-white border-gray-200"}`}>
-          <div className="text-[10px] uppercase tracking-wide text-gray-400">En retard</div>
-          <div className={`text-lg font-semibold ${enRetard.length > 0 ? "text-red-700" : ""}`}>{enRetard.length}</div>
+        <div className={`rounded-lg p-4 border ${enRetard.length > 0 ? "bg-signal/5 border-signal/25" : "bg-white border-argent/25"}`}>
+          <div className="text-[10px] uppercase tracking-wide text-ink/40">En retard</div>
+          <div className={`text-lg font-display font-semibold num ${enRetard.length > 0 ? "text-signal" : ""}`}>{enRetard.length}</div>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
+      <div className="bg-white border border-argent/25 rounded-lg overflow-hidden">
         {credits && credits.length > 0 ? (
           <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
 <table className="w-full text-xs">
-            <thead className="bg-gray-50 text-gray-500 text-left">
+            <thead className="bg-argent/10 text-ink/40 text-left">
               <tr>
                 <th className="p-2">Client</th>
                 <th>Facture</th>
@@ -66,14 +66,14 @@ export default async function CreditsPage() {
                 const depassementLimite =
                   c.limite_credit !== null && Number(c.solde_restant) > Number(c.limite_credit);
                 return (
-                  <tr key={c.vente_id} className="border-t border-gray-100">
+                  <tr key={c.vente_id} className="border-t border-argent/15">
                     <td className="p-2">
                       {c.client_nom}
-                      {c.client_telephone && <span className="text-gray-400"> — {c.client_telephone}</span>}
+                      {c.client_telephone && <span className="text-ink/40"> — {c.client_telephone}</span>}
                     </td>
                     <td>{c.numero_facture}</td>
                     <td>{Number(c.montant_total).toLocaleString("fr-FR")} FCFA</td>
-                    <td className={depassementLimite ? "text-red-600 font-semibold" : ""}>
+                    <td className={depassementLimite ? "text-signal font-semibold" : ""}>
                       {Number(c.solde_restant).toLocaleString("fr-FR")} FCFA
                     </td>
                     <td>{c.limite_credit ? `${Number(c.limite_credit).toLocaleString("fr-FR")} FCFA` : "—"}</td>
@@ -90,7 +90,7 @@ export default async function CreditsPage() {
           </table>
 </div>
         ) : (
-          <div className="text-center py-10 text-gray-400">
+          <div className="text-center py-10 text-ink/40">
             <p className="text-sm">Aucun crédit en cours</p>
             <p className="text-xs">Les ventes payées (au moins en partie) à crédit apparaîtront ici.</p>
           </div>

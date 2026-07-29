@@ -248,7 +248,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
               focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
           />
           {resultats.length > 0 && (
-            <div className="absolute z-10 bg-white border border-ink/10 rounded-md mt-1 w-full shadow-lg max-h-64 overflow-y-auto">
+            <div className="absolute z-10 bg-white border border-argent/25 rounded-md mt-1 w-full shadow-lg max-h-64 overflow-y-auto">
               {resultats.map((a) => (
                 <button
                   key={a.id}
@@ -263,7 +263,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           )}
         </div>
 
-        <div className="bg-white border border-ink/10 rounded-lg overflow-hidden">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
           {lignes.length === 0 ? (
             <div className="p-8 text-center text-ink/30 text-xs italic flex flex-col items-center gap-2">
               <ShoppingBag size={22} className="text-ink/15" />
@@ -272,7 +272,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           ) : (
             <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
               <table className="w-full text-xs">
-                <thead className="bg-ink/[0.03] text-ink/40 text-left">
+                <thead className="bg-argent/10 text-ink/40 text-left">
                   <tr><th className="p-2.5">Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>
                 </thead>
                 <tbody>
@@ -300,7 +300,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       </div>
 
       <div className="space-y-3">
-        <div className="bg-white border border-ink/10 rounded-lg p-3">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3">
           <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
             Client (optionnel — requis si crédit)
           </label>
@@ -316,7 +316,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           </select>
         </div>
 
-        <div className="bg-white border border-ink/10 rounded-lg p-3 space-y-2">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3 space-y-2">
           <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">Mode(s) de paiement</label>
           {MODES.map((m) => (
             <div key={m.key} className="flex items-center justify-between text-xs">
