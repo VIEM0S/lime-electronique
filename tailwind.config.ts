@@ -5,21 +5,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Identité Lime-électronique : l'accent lime porte le nom de la
-        // boutique plutôt qu'un terracotta générique.
-        ink: "#16211F",
+        // Identité Lime-électronique — bleu/gris du logo officiel du client
+        // (couleurs extraites directement de leur logo, cf. échanges du 29/07/2026).
+        ink: "#1E2733",
         lime: {
-          DEFAULT: "#B7D12A",
-          deep: "#8FA916",
-          soft: "#E9F1C4",
+          DEFAULT: "#2E4FA0",
+          deep: "#1B2E63",
+          soft: "#E4EAF7",
         },
-        paper: "#F6F5EF",
+        paper: "#F5F6F8",
         ember: { DEFAULT: "#E2A33D", soft: "#FBF0DD" },
         signal: { DEFAULT: "#D14343", soft: "#FBE7E7" },
         ok: { DEFAULT: "#3F9142", soft: "#E4F3E4" },
         // Alias conservés pour compat pendant la migration progressive.
-        accent: "#16211F",
-        accent2: "#B7D12A",
+        accent: "#1E2733",
+        accent2: "#2E4FA0",
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],

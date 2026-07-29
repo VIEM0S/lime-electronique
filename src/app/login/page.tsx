@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { AlertCircle, ArrowRight } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -43,8 +44,8 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-sm animate-fade-up">
         <div className="flex flex-col items-center mb-6">
-          <span className="w-11 h-11 rounded-lg bg-lime text-ink font-display font-bold text-lg flex items-center justify-center mb-3">
-            L
+          <span className="w-14 h-14 rounded-lg overflow-hidden flex items-center justify-center bg-white mb-3">
+            <Image src="/icons/icon-192.png" alt="Lime-électronique" width={56} height={56} className="object-cover" />
           </span>
           <h1 className="font-display font-semibold text-white text-lg">Lime-électronique</h1>
           <p className="text-xs text-white/40 mt-0.5">Système de gestion — Bamako</p>

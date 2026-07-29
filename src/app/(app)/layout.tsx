@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getProfilCourant } from "@/lib/supabase/current-user";
 import SyncBar from "@/components/SyncBar";
@@ -23,8 +24,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen">
       <header className="bg-ink text-white px-4 sm:px-6 py-3 text-sm flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="w-7 h-7 rounded-md bg-lime text-ink font-display font-bold text-sm flex items-center justify-center">
-            L
+          <span className="w-7 h-7 rounded-md overflow-hidden flex items-center justify-center bg-white shrink-0">
+            <Image src="/icons/icon-192.png" alt="Lime-électronique" width={28} height={28} className="object-cover" />
           </span>
           <div className="leading-tight">
             <div className="font-display font-semibold text-[13px]">Lime-électronique</div>
