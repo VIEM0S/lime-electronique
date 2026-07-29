@@ -1,8 +1,9 @@
 "use client";
 
-import { Printer } from "lucide-react";
+import { Printer, Share2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import type { ModePaiement } from "@/types/database.types";
+import { TELEPHONE_ENTREPRISE, partagerWhatsApp } from "@/lib/partage";
 
 type LigneRecu = { nom: string; quantite: number; prix_unitaire: number };
 type PaiementRecu = { mode: ModePaiement; montant: number };
@@ -45,12 +46,25 @@ export default function FactureApercu({
 }) {
   const aDuCredit = paiements.some((p) => p.mode === "credit" && p.montant > 0);
 
+  function texteWhatsApp() {
+    const lignesTexte = lignes.map((l) => `${l.quantite}× ${l.nom} — ${(l.quantite * l.prix_unitaire).toLocaleString("fr-FR")} FCFA`).join("\n");
+    return (
+      `*Lime-électronique* — Facture ${numero}\n` +
+      `Client : ${clientNom ?? "Comptant"}\n\n` +
+      `${lignesTexte}\n\n` +
+      `Total : ${total.toLocaleString("fr-FR")} FCFA\n` +
+      `Statut : ${libelleStatut(statut, aDuCredit)}\n\n` +
+      `Lime-électronique — ${TELEPHONE_ENTREPRISE}`
+    );
+  }
+
   return (
     <>
       <div id="zone-impression" className="bg-white border border-ink/10 rounded-lg p-4 text-xs font-mono">
         <div className="text-center mb-3">
           <div className="font-display font-semibold text-sm">Lime-électronique</div>
           <div className="text-ink/50">Bamako — Gabriel Touré</div>
+          <div className="text-ink/50">{TELEPHONE_ENTREPRISE}</div>
         </div>
         <div className="border-t border-dashed border-ink/20 my-2" />
         <div>Facture : {numero}</div>
@@ -85,9 +99,14 @@ export default function FactureApercu({
           Statut : {libelleStatut(statut, aDuCredit)}
         </div>
       </div>
-      <Button variant="secondary" size="sm" onClick={() => window.print()} className="w-full">
-        <Printer size={13} /> Imprimer / Enregistrer en PDF
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="secondary" size="sm" onClick={() => window.print()} className="flex-1">
+          <Printer size={13} /> Imprimer / PDF
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => partagerWhatsApp(texteWhatsApp())} className="flex-1">
+          <Share2 size={13} /> WhatsApp
+        </Button>
+      </div>
     </>
   );
 }

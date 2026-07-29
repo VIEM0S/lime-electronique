@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   ShoppingCart,
-  Wallet,
   Package,
   Users,
   Truck,
@@ -15,13 +14,14 @@ import {
   BarChart3,
   Menu,
   X,
+  FileText,
 } from "lucide-react";
 import type { Role } from "@/types/database.types";
 
 const ALL_LINKS = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, roles: ["proprietaire"] as Role[] },
   { href: "/caisse", label: "Caisse", icon: ShoppingCart, roles: ["proprietaire", "caisse"] as Role[] },
-  { href: "/session-caisse", label: "Session de caisse", icon: Wallet, roles: ["proprietaire", "caisse"] as Role[] },
+  { href: "/factures", label: "Factures", icon: FileText, roles: ["proprietaire", "caisse"] as Role[] },
   { href: "/catalogue", label: "Catalogue", icon: Package, roles: ["proprietaire"] as Role[] },
   { href: "/clients", label: "Clients & créances", icon: Users, roles: ["proprietaire"] as Role[] },
   { href: "/credits", label: "Crédits", icon: CreditCard, roles: ["proprietaire"] as Role[] },

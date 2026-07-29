@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 // Clé publique VAPID — publique par nature (le pendant privé reste côté
 // Edge Function, jamais exposé ici). Générée pour ce projet uniquement.
-const VAPID_PUBLIC_KEY = "BPahTaVG_ymj0bvJX1-DfMv8yf-TrIXQaFATJGvHO-aBG_-zHCmIS6Wu2CLcbfSjfZWiW1dgHJ46Z9iph9F4aFw";
+const VAPID_PUBLIC_KEY = "BP0Xgju09Dq-P9SssJLWE9f_fw2EqYSDRxsCr1fI-itFhz5JjVKO_6AlVVrbbRExg4OwSaQM5a28o4dU1z8xLZo";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
