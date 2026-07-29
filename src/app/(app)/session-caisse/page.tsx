@@ -96,7 +96,7 @@ export default async function SessionCaissePage() {
     <div className="space-y-6">
       <h1 className="text-lg font-display font-semibold text-ink">Session de caisse</h1>
       <p className="text-xs text-ink/40 italic">
-        FR-31/FR-32 — ouverture avec fonds initial déclaré, fermeture avec calcul automatique de l&apos;écart
+        Ouverture avec fonds initial déclaré, fermeture avec calcul automatique de l&apos;écart
       </p>
       <SessionCaisseForm sessionOuverte={sessionOuverte ?? null} repartitionParMode={repartitionParMode} />
 

@@ -76,7 +76,7 @@ export default async function RapportsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-lg font-display font-semibold text-ink">Rapports &amp; Analytics</h1>
-      <p className="text-xs text-ink/40 italic">FR-29 et au-delà — vue d&apos;ensemble des performances</p>
+      <p className="text-xs text-ink/40 italic">Vue d&apos;ensemble des performances</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white border border-argent/25 rounded-lg p-4">

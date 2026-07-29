@@ -161,7 +161,7 @@ export default function CatalogueClient({
 
       <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
         <h2 className="text-sm font-display font-semibold mb-1">Mouvements de stock récents</h2>
-        <p className="text-xs text-ink/40 italic mb-2">FR-07 — historique des entrées/sorties</p>
+        <p className="text-xs text-ink/40 italic mb-2">Historique des entrées/sorties</p>
         <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
 <table className="w-full text-xs">
           <thead className="text-ink/40 text-left">

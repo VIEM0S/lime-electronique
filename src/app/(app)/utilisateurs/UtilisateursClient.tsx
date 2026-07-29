@@ -33,7 +33,7 @@ export default function UtilisateursClient({
       <div>
         <h1 className="text-lg font-display font-semibold text-ink">Gestion des utilisateurs</h1>
         <p className="text-xs text-ink/40 italic">
-          FR-22 à FR-22quater — création des comptes réservée à Supabase (Authentication → Users)
+          Création des comptes réservée à Supabase (Authentication → Users)
         </p>
       </div>
 

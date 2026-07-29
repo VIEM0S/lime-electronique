@@ -9,7 +9,7 @@ import {
   Package,
   Users,
   Truck,
-  UserCog,
+  Settings,
   CreditCard,
   BarChart3,
   Menu,
@@ -27,7 +27,7 @@ const ALL_LINKS = [
   { href: "/credits", label: "Crédits", icon: CreditCard, roles: ["proprietaire"] as Role[] },
   { href: "/approvisionnement", label: "Approvisionnement", icon: Truck, roles: ["proprietaire"] as Role[] },
   { href: "/rapports", label: "Rapports & Analytics", icon: BarChart3, roles: ["proprietaire"] as Role[] },
-  { href: "/utilisateurs", label: "Utilisateurs", icon: UserCog, roles: ["proprietaire"] as Role[] },
+  { href: "/parametres", label: "Paramètres", icon: Settings, roles: ["proprietaire"] as Role[] },
 ];
 
 export default function Nav({ role }: { role: Role }) {

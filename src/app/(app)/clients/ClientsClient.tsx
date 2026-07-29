@@ -29,7 +29,7 @@ export default function ClientsClient({ clients }: { clients: Client[] }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-display font-semibold text-ink">Clients & créances</h1>
-          <p className="text-xs text-ink/40 italic">Suivi des ventes à crédit (FR-15 à FR-18)</p>
+          <p className="text-xs text-ink/40 italic">Suivi des ventes à crédit</p>
         </div>
         <Button size="sm" onClick={() => setModalNouveau(true)}>
           <Plus size={14} /> Nouveau client
