@@ -10,8 +10,8 @@ export default function VentesChart({ data }: { data: { jour: string; total: num
         <AreaChart data={data} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
           <defs>
             <linearGradient id="limeFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2E4FA0" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#2E4FA0" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="#0050B0" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#0050B0" stopOpacity={0.02} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#1E27330F" vertical={false} />
@@ -37,7 +37,7 @@ export default function VentesChart({ data }: { data: { jour: string; total: num
               borderRadius: 8,
             }}
           />
-          <Area type="monotone" dataKey="total" stroke="#1B2E63" strokeWidth={2} fill="url(#limeFill)" />
+          <Area type="monotone" dataKey="total" stroke="#083078" strokeWidth={2} fill="url(#limeFill)" />
         </AreaChart>
       </ResponsiveContainer>
     </div>

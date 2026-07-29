@@ -6,12 +6,12 @@ const config: Config = {
     extend: {
       colors: {
         // Identité Lime-électronique — bleu/gris du logo officiel du client
-        // (couleurs extraites directement de leur logo, cf. échanges du 29/07/2026).
+        // (couleurs extraites du fichier logo vectoriel fourni le 29/07/2026).
         ink: "#1E2733",
         lime: {
-          DEFAULT: "#2E4FA0",
-          deep: "#1B2E63",
-          soft: "#E4EAF7",
+          DEFAULT: "#0050B0",
+          deep: "#083078",
+          soft: "#E4ECFA",
         },
         paper: "#F5F6F8",
         ember: { DEFAULT: "#E2A33D", soft: "#FBF0DD" },
@@ -19,7 +19,7 @@ const config: Config = {
         ok: { DEFAULT: "#3F9142", soft: "#E4F3E4" },
         // Alias conservés pour compat pendant la migration progressive.
         accent: "#1E2733",
-        accent2: "#2E4FA0",
+        accent2: "#0050B0",
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
