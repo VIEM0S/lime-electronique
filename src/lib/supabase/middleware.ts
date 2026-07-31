@@ -1,4 +1,12 @@
 // Rafraîchit la session Supabase à chaque requête (nécessaire avec @supabase/ssr)
+//
+// getSession() plutôt que getUser() : ce middleware s'exécute avant même
+// l'affichage de CHAQUE page, donc un aller-retour réseau ici pèse sur
+// absolument toute navigation. getSession() lit le jeton depuis les cookies
+// sans revalider en direct auprès du serveur — sûr ici, car la vraie
+// barrière de sécurité reste les règles RLS sur la base, qui revalident le
+// jeton indépendamment à chaque requête de données, quoi que fasse ce
+// middleware (qui ne sert qu'à rediriger vers /login si absent).
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -25,8 +33,9 @@ export async function updateSession(request: NextRequest) {
   );
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
 
