@@ -41,7 +41,7 @@ export default function Modal({
           <button
             onClick={onClose}
             aria-label="Fermer"
-            className="text-ink/40 hover:text-ink rounded p-1 hover:bg-ink/5 transition-colors"
+            className="text-ink/55 hover:text-ink rounded p-1 hover:bg-ink/5 transition-colors"
           >
             <X size={16} />
           </button>

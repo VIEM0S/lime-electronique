@@ -56,30 +56,30 @@ export default function NouvelUtilisateurModal({
     <Modal open={open} onClose={onClose} title="Nouvel utilisateur">
       <div className="space-y-3">
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">Nom</label>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">Nom</label>
           <input value={nom} onChange={(e) => setNom(e.target.value)}
             className="w-full border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
             placeholder="Fatoumata Diarra" autoFocus />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">Email (identifiant)</label>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">Email (identifiant)</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
             className="w-full border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
             placeholder="vendeur2@lime-electronique.ml" />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">Mot de passe temporaire</label>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">Mot de passe temporaire</label>
           <input type="password" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)}
             className="w-full border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
             placeholder="Au moins 6 caractères" />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">Rôle</label>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">Rôle</label>
           <div className="flex gap-1.5">
             {(["caisse", "proprietaire"] as Role[]).map((r) => (
               <button key={r} onClick={() => setRole(r)}
                 className={`flex-1 text-xs py-1.5 rounded-md border capitalize transition-colors ${
-                  role === r ? "bg-lime/15 border-lime-deep text-lime-deep font-semibold" : "border-ink/15 text-ink/50"
+                  role === r ? "bg-lime/15 border-lime-deep text-lime-deep font-semibold" : "border-ink/15 text-ink/62"
                 }`}>
                 {r}
               </button>

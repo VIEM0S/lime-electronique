@@ -9,7 +9,7 @@ import Button from "@/components/ui/Button";
 import FactureApercu from "./FactureApercu";
 
 type ArticleLite = { id: string; code_article: string; nom: string; prix_vente: number; quantite_stock: number };
-type ClientLite = { id: string; nom: string; telephone: string | null };
+type ClientLite = { id: string; nom: string; telephone: string | null; solde_du: number; limite_credit: number | null };
 
 type Ligne = { article: ArticleLite; quantite: number };
 
@@ -20,8 +20,15 @@ type Ligne = { article: ArticleLite; quantite: number };
 // ligne, il faut mettre en file d'attente" de "le serveur a refusé pour
 // une vraie raison métier (stock insuffisant, etc.), il faut le dire".
 function estErreurReseau(err: unknown): boolean {
+  // Un échec de fetch (vraie coupure réseau, DNS, etc.) remonte quasiment
+  // toujours comme un TypeError, quel que soit le navigateur — c'est un
+  // signal bien plus fiable que d'essayer de reconnaître le texte exact du
+  // message, qui varie beaucucoup entre Chrome/Safari/Firefox/Android.
+  if (err instanceof TypeError) return true;
   const msg = err instanceof Error ? err.message : String(err ?? "");
-  return /failed to fetch|networkerror|load failed|network request failed|ERR_INTERNET_DISCONNECTED|ERR_NETWORK|ERR_CONNECTION/i.test(msg);
+  return /failed to fetch|networkerror|load failed|network request failed|internet|offline|ERR_NETWORK|ERR_CONNECTION|timeout|timed out/i.test(
+    msg
+  );
 }
 
 function attendre(ms: number) {
@@ -110,6 +117,20 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       setErreur(`Le total des paiements (${totalPaye.toLocaleString("fr-FR")} FCFA) doit être égal au total de la vente (${total.toLocaleString("fr-FR")} FCFA).`);
       return;
     }
+    if (montants.credit > 0 && clientId) {
+      const client = clients.find((c) => c.id === clientId);
+      if (client?.limite_credit != null) {
+        const soldeApres = Number(client.solde_du) + montants.credit;
+        if (soldeApres > Number(client.limite_credit)) {
+          setErreur(
+            `Limite de crédit dépassée pour ${client.nom} : solde actuel ${Number(client.solde_du).toLocaleString("fr-FR")} FCFA, ` +
+              `limite ${Number(client.limite_credit).toLocaleString("fr-FR")} FCFA. Cette vente porterait le solde à ` +
+              `${soldeApres.toLocaleString("fr-FR")} FCFA (dépassement de ${(soldeApres - Number(client.limite_credit)).toLocaleString("fr-FR")} FCFA).`
+          );
+          return;
+        }
+      }
+    }
 
     setEnvoi(true);
 
@@ -146,12 +167,12 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
     let venteId: string | null = null;
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       const { data: vente, error: erreurVente } = await supabase
         .from("ventes")
         .insert({ client_id: clientId || null, utilisateur_id: user?.id ?? null })
@@ -202,7 +223,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       reinitialiser();
     } catch (err) {
       setEnvoi(false);
-      if (venteId) {
+      if (venteId && estErreurReseau(err)) {
         // La vente existe déjà côté serveur (son numéro de facture est réel) —
         // on ne la remet PAS en file d'attente hors-ligne pour éviter de la
         // dupliquer à la prochaine synchronisation. On informe clairement.
@@ -210,6 +231,20 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           `Panne réseau après création partielle de la vente (déjà enregistrée côté serveur). ` +
             `Vérifie "Ventes récentes" avant de ressaisir — ne recommence pas à zéro sans vérifier.`
         );
+      } else if (venteId) {
+        // Refus métier (ex: limite de crédit dépassée), pas une panne réseau.
+        // Des lignes ont pu être insérées avant l'échec (stock déjà
+        // décrémenté) — on annule proprement plutôt que de supprimer à cru,
+        // pour que le stock (et un éventuel crédit déjà enregistré) soit
+        // correctement restauré par fn_annuler_vente().
+        const {
+          data: { user: utilisateurCourant },
+        } = await supabase.auth.getUser();
+        await supabase
+          .from("ventes")
+          .update({ statut: "annulee", motif_annulation: "Refusée automatiquement (échec de validation)", annule_par: utilisateurCourant?.id ?? null })
+          .eq("id", venteId);
+        setErreur(err instanceof Error ? err.message : "Vente refusée.");
       } else if (estErreurReseau(err)) {
         await basculerHorsLigne();
       } else {
@@ -239,7 +274,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-3">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/30" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/45" />
           <input
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
@@ -256,7 +291,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
                   className="flex justify-between w-full text-left px-3 py-2 text-xs hover:bg-lime/10 transition-colors"
                 >
                   <span>{a.code_article} — {a.nom}</span>
-                  <span className="num text-ink/40">{a.quantite_stock} en stock</span>
+                  <span className="num text-ink/55">{a.quantite_stock} en stock</span>
                 </button>
               ))}
             </div>
@@ -265,14 +300,14 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
         <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
           {lignes.length === 0 ? (
-            <div className="p-8 text-center text-ink/30 text-xs italic flex flex-col items-center gap-2">
+            <div className="p-8 text-center text-ink/45 text-xs italic flex flex-col items-center gap-2">
               <ShoppingBag size={22} className="text-ink/15" />
               Le panier est vide — recherchez un article ci-dessus
             </div>
           ) : (
             <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
               <table className="w-full text-xs">
-                <thead className="bg-argent/10 text-ink/40 text-left">
+                <thead className="bg-argent/10 text-ink/55 text-left">
                   <tr><th className="p-2.5">Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>
                 </thead>
                 <tbody>
@@ -301,7 +336,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
       <div className="space-y-3">
         <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3">
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
             Client (optionnel — requis si crédit)
           </label>
           <select
@@ -317,7 +352,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
         </div>
 
         <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3 space-y-2">
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">Mode(s) de paiement</label>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 font-semibold">Mode(s) de paiement</label>
           {MODES.map((m) => (
             <div key={m.key} className="flex items-center justify-between text-xs">
               <span>{m.label}</span>
@@ -334,7 +369,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
         </div>
 
         <div className="bg-ink text-white rounded-lg p-3.5">
-          <div className="text-[10px] uppercase tracking-wide text-white/50">Total à payer</div>
+          <div className="text-[10px] uppercase tracking-wide text-white/64">Total à payer</div>
           <div className="text-lg font-display font-semibold num text-lime">{total.toLocaleString("fr-FR")} FCFA</div>
         </div>
 

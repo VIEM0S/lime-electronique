@@ -48,16 +48,16 @@ export default function LoginPage() {
             <Image src="/icons/icon-192.png" alt="Lime-électronique" width={56} height={56} className="object-cover" />
           </span>
           <h1 className="font-display font-semibold text-white text-lg">Lime-électronique</h1>
-          <p className="text-xs text-white/40 mt-0.5">Système de gestion — Bamako</p>
+          <p className="text-xs text-white/58 mt-0.5">Système de gestion — Bamako</p>
         </div>
 
         <div className="bg-paper rounded-lg p-7 shadow-2xl">
           <h2 className="font-display font-semibold text-ink mb-1">Connexion</h2>
-          <p className="text-xs text-ink/40 italic mb-6">Écran commun aux deux profils</p>
+          <p className="text-xs text-ink/55 italic mb-6">Écran commun aux deux profils</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+              <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
                 Identifiant
               </label>
               <input
@@ -72,7 +72,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+              <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
                 Mot de passe
               </label>
               <input
@@ -99,7 +99,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-[11px] text-ink/35 text-center mt-4">
+          <p className="text-[11px] text-ink/50 text-center mt-4">
             Mot de passe oublié ? Contacte le propriétaire — il peut le changer depuis
             l&apos;écran Utilisateurs.
           </p>

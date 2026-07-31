@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Pencil } from "lucide-react";
 import ModifierUtilisateurModal from "./ModifierUtilisateurModal";
 import Toast, { type ToastMsg } from "@/components/ui/Toast";
+import Pagination, { usePagination } from "@/components/ui/Pagination";
 import type { Profil } from "@/types/database.types";
 
 export default function UtilisateursClient({
@@ -27,12 +28,13 @@ export default function UtilisateursClient({
         u.role.toLowerCase().includes(q)
     );
   }, [utilisateurs, emailsParId, recherche]);
+  const { page, setPage, totalPages, itemsPage: utilisateursPage } = usePagination(filtres);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-display font-semibold text-ink">Gestion des utilisateurs</h1>
-        <p className="text-xs text-ink/40 italic">
+        <p className="text-xs text-ink/55 italic">
           Création des comptes réservée à Supabase (Authentication → Users)
         </p>
       </div>
@@ -47,36 +49,37 @@ export default function UtilisateursClient({
       <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="bg-argent/10 text-ink/40 text-left">
+            <thead className="bg-argent/10 text-ink/55 text-left">
               <tr><th className="p-2.5">Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr>
             </thead>
             <tbody>
-              {filtres.map((u) => (
+              {utilisateursPage.map((u) => (
                 <tr key={u.id} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
                   <td className="p-2.5">{u.nom}</td>
-                  <td className="text-ink/50">{emailsParId[u.id] ?? "—"}</td>
+                  <td className="text-ink/62">{emailsParId[u.id] ?? "—"}</td>
                   <td className="capitalize">{u.role}</td>
                   <td>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                      u.actif ? "bg-ok/10 text-ok" : "bg-ink/10 text-ink/50"
+                      u.actif ? "bg-ok/10 text-ok" : "bg-ink/10 text-ink/62"
                     }`}>
                       {u.actif ? "Actif" : "Désactivé"}
                     </span>
                   </td>
                   <td className="pr-2.5 text-right">
                     <button onClick={() => setUtilisateurEdite(u)}
-                      className="inline-flex items-center gap-1 text-ink/40 hover:text-lime-deep text-[11px] font-semibold">
+                      className="inline-flex items-center gap-1 text-ink/55 hover:text-lime-deep text-[11px] font-semibold">
                       <Pencil size={12} /> Modifier / mot de passe
                     </button>
                   </td>
                 </tr>
               ))}
               {filtres.length === 0 && (
-                <tr><td colSpan={5} className="p-4 text-center text-ink/30">Aucun utilisateur trouvé.</td></tr>
+                <tr><td colSpan={5} className="p-4 text-center text-ink/45">Aucun utilisateur trouvé.</td></tr>
               )}
             </tbody>
           </table>
         </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </div>
 
       <ModifierUtilisateurModal

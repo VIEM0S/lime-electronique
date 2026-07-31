@@ -7,7 +7,7 @@ function Swatch({ nom, classeBg, hex, classeTexte = "text-white" }: { nom: strin
       <div className={`h-16 flex items-end p-2 ${classeBg} ${classeTexte}`}>
         <span className="text-xs font-semibold">{nom}</span>
       </div>
-      <div className="bg-white px-2 py-1.5 text-[11px] font-mono text-ink/50">{hex}</div>
+      <div className="bg-white px-2 py-1.5 text-[11px] font-mono text-ink/62">{hex}</div>
     </div>
   );
 }
@@ -21,7 +21,7 @@ export default function StyleGuidePage() {
     <div className="space-y-10 pb-16">
       <div>
         <h1 className="text-lg font-display font-semibold text-ink">Guide de style — bleu / argent</h1>
-        <p className="text-xs text-ink/40 italic">
+        <p className="text-xs text-ink/55 italic">
           Page de référence uniquement — pas liée à tes vraies données. Regarde, réagis, on ajuste ici avant de
           toucher le reste de l&apos;app.
         </p>
@@ -65,25 +65,25 @@ export default function StyleGuidePage() {
             <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2.5 bg-lime/10 text-lime-deep">
               <Wallet size={16} />
             </div>
-            <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold">Ventes du jour</div>
+            <div className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold">Ventes du jour</div>
             <div className="text-lg font-display font-semibold num">555 000 FCFA</div>
-            <div className="text-xs text-ink/40">3 vente(s)</div>
+            <div className="text-xs text-ink/55">3 vente(s)</div>
           </div>
           <div className="bg-white border border-argent/25 border-l-[3px] border-l-ember rounded-lg p-4 shadow-[0_1px_2px_rgba(8,48,120,0.06)]">
             <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2.5 bg-ember/10 text-ember">
               <AlertTriangle size={16} />
             </div>
-            <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold">Créances en cours</div>
+            <div className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold">Créances en cours</div>
             <div className="text-lg font-display font-semibold num">150 000 FCFA</div>
-            <div className="text-xs text-ink/40">1 client(s)</div>
+            <div className="text-xs text-ink/55">1 client(s)</div>
           </div>
           <div className="bg-white border border-argent/25 border-l-[3px] border-l-argent rounded-lg p-4 shadow-[0_1px_2px_rgba(8,48,120,0.06)]">
             <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2.5 bg-argent/10 text-argent-deep">
               <PackageX size={16} />
             </div>
-            <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold">Articles en stock faible</div>
+            <div className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold">Articles en stock faible</div>
             <div className="text-lg font-display font-semibold num">2</div>
-            <div className="text-xs text-ink/40">&lt; 5 unités</div>
+            <div className="text-xs text-ink/55">&lt; 5 unités</div>
           </div>
         </div>
       </section>
@@ -93,7 +93,7 @@ export default function StyleGuidePage() {
         <h2 className="text-sm font-display font-semibold text-ink">4. Badges / statuts</h2>
         <div className="bg-white border border-argent/25 rounded-lg p-4 space-y-3">
           <div>
-            <p className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1.5">Ventes</p>
+            <p className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold mb-1.5">Ventes</p>
             <div className="flex gap-2 flex-wrap">
               <Badge classe="bg-ok/10 text-ok">Payé</Badge>
               <Badge classe="bg-ember/10 text-ember">Payé en partie</Badge>
@@ -101,7 +101,7 @@ export default function StyleGuidePage() {
             </div>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1.5">Crédits</p>
+            <p className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold mb-1.5">Crédits</p>
             <div className="flex gap-2 flex-wrap">
               <Badge classe="bg-argent/15 text-argent-deep">En cours</Badge>
               <Badge classe="bg-signal/10 text-signal">En retard</Badge>
@@ -109,14 +109,14 @@ export default function StyleGuidePage() {
             </div>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1.5">Utilisateurs</p>
+            <p className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold mb-1.5">Utilisateurs</p>
             <div className="flex gap-2 flex-wrap">
               <Badge classe="bg-ok/10 text-ok">Actif</Badge>
-              <Badge classe="bg-ink/10 text-ink/50">Désactivé</Badge>
+              <Badge classe="bg-ink/10 text-ink/62">Désactivé</Badge>
             </div>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1.5">Rôle (en-tête)</p>
+            <p className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold mb-1.5">Rôle (en-tête)</p>
             <div className="flex gap-2 flex-wrap">
               <span className="text-[10px] bg-lime/15 text-lime rounded-full px-2.5 py-1 uppercase tracking-wide font-semibold">
                 Propriétaire
@@ -139,7 +139,7 @@ export default function StyleGuidePage() {
             ].map((m) => (
               <div key={m.nom} className="flex items-center gap-2">
                 <span className="w-4 h-4 rounded-full" style={{ backgroundColor: m.hex }} />
-                <span className="text-xs text-ink/60">{m.nom}</span>
+                <span className="text-xs text-ink/70">{m.nom}</span>
               </div>
             ))}
           </div>
@@ -153,9 +153,9 @@ export default function StyleGuidePage() {
           <div className="text-lg font-display font-semibold text-ink">Titre de page (font-display, semibold)</div>
           <div className="text-sm font-display font-semibold text-ink">Titre de section (text-sm, display)</div>
           <div className="text-sm text-ink">Texte courant (body)</div>
-          <div className="text-xs text-ink/40 italic">Légende discrète (italic, ink/40)</div>
+          <div className="text-xs text-ink/55 italic">Légende discrète (italic, ink/40)</div>
           <div className="text-lg font-display font-semibold num">1 234 567 FCFA</div>
-          <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold">Étiquette (label kpi)</div>
+          <div className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold">Étiquette (label kpi)</div>
         </div>
       </section>
 
@@ -176,8 +176,8 @@ export default function StyleGuidePage() {
           </header>
           <nav className="bg-ink px-4 py-2.5 flex gap-4 text-xs">
             <span className="text-lime font-semibold border-b-2 border-lime pb-1">Tableau de bord</span>
-            <span className="text-white/50">Caisse</span>
-            <span className="text-white/50">Factures</span>
+            <span className="text-white/64">Caisse</span>
+            <span className="text-white/64">Factures</span>
           </nav>
         </div>
       </section>
@@ -191,7 +191,7 @@ export default function StyleGuidePage() {
               <Bell size={16} className="text-lime-deep" />
               <div>
                 <p className="text-sm font-display font-semibold">Alertes de caisse</p>
-                <p className="text-xs text-ink/40">Reçois une vraie notification à l&apos;ouverture/fermeture.</p>
+                <p className="text-xs text-ink/55">Reçois une vraie notification à l&apos;ouverture/fermeture.</p>
               </div>
             </div>
             <button className="flex items-center gap-1 text-xs bg-lime-deep text-white px-3 py-1.5 rounded-md font-semibold">

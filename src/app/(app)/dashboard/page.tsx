@@ -82,14 +82,18 @@ export default async function DashboardPage() {
 
       <NotificationsPush />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Kpi
-          icon={Wallet}
-          label="Ventes du jour"
-          value={`${totalVentesJour.toLocaleString("fr-FR")} FCFA`}
-          sub={`${ventesJour?.length ?? 0} vente(s)`}
-          tone="lime"
-        />
+      <div className="bg-lime rounded-lg p-5 shadow-[0_4px_16px_rgba(8,48,120,0.18)] text-white">
+        <div className="flex items-center gap-2 text-white/70 text-[11px] uppercase tracking-wide font-semibold">
+          <Wallet size={14} />
+          Ventes du jour
+        </div>
+        <div className="text-3xl font-display font-bold num mt-1">
+          {totalVentesJour.toLocaleString("fr-FR")} <span className="text-lg font-normal text-white/70">FCFA</span>
+        </div>
+        <div className="text-xs text-white/60 mt-0.5">{ventesJour?.length ?? 0} vente(s) aujourd&apos;hui</div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Kpi
           icon={AlertTriangle}
           label="Créances en cours"
@@ -109,16 +113,16 @@ export default async function DashboardPage() {
       {Object.keys(parMode).length > 0 && (
         <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
           <h2 className="text-sm font-display font-semibold mb-1">Encaissé aujourd&apos;hui</h2>
-          <p className="text-xs text-ink/40 italic mb-2">Par mode de paiement — le crédit n&apos;est pas de l&apos;argent en caisse</p>
+          <p className="text-xs text-ink/55 italic mb-2">Par mode de paiement — le crédit n&apos;est pas de l&apos;argent en caisse</p>
           <div className="text-lg font-display font-semibold num mb-2">
-            {totalEncaisseReel.toLocaleString("fr-FR")} FCFA <span className="text-xs font-normal text-ink/40">réellement en caisse</span>
+            {totalEncaisseReel.toLocaleString("fr-FR")} FCFA <span className="text-xs font-normal text-ink/55">réellement en caisse</span>
           </div>
           <table className="w-full text-xs">
             <tbody>
               {Object.entries(parMode).map(([mode, montant]) => (
                 <tr key={mode} className="border-t border-ink/5">
-                  <td className={`py-1 ${mode === "credit" ? "text-ink/40 italic" : ""}`}>{LABEL_MODE[mode] ?? mode}</td>
-                  <td className={`py-1 text-right num ${mode === "credit" ? "text-ink/40 italic" : "font-semibold"}`}>
+                  <td className={`py-1 ${mode === "credit" ? "text-ink/55 italic" : ""}`}>{LABEL_MODE[mode] ?? mode}</td>
+                  <td className={`py-1 text-right num ${mode === "credit" ? "text-ink/55 italic" : "font-semibold"}`}>
                     {montant.toLocaleString("fr-FR")} FCFA
                   </td>
                 </tr>
@@ -161,7 +165,7 @@ export default async function DashboardPage() {
         <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
           <h2 className="text-sm font-display font-semibold mb-2">Articles en stock faible</h2>
           <table className="w-full text-xs">
-            <thead className="text-ink/40 text-left">
+            <thead className="text-ink/55 text-left">
               <tr><th className="py-1">Code</th><th>Nom</th><th>Stock</th></tr>
             </thead>
             <tbody>
@@ -206,9 +210,9 @@ function Kpi({
       <div className={`w-8 h-8 rounded-md flex items-center justify-center mb-2.5 ${toneClasses.puce}`}>
         <Icon size={16} />
       </div>
-      <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold">{label}</div>
+      <div className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold">{label}</div>
       <div className="text-lg font-display font-semibold num">{value}</div>
-      <div className="text-xs text-ink/40">{sub}</div>
+      <div className="text-xs text-ink/55">{sub}</div>
     </div>
   );
 }

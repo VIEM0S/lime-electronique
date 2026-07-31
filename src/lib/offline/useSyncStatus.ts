@@ -17,6 +17,30 @@ import {
 // c'est la seule approche fiable multiplateforme pour ce cas d'usage.
 const INTERVALLE_RETRY_MS = 20_000;
 
+// `navigator.onLine` dit seulement "une interface réseau existe" (WiFi
+// connecté), pas "le serveur est vraiment joignable" — au Mali une connexion
+// instable peut rester "en ligne" pour le téléphone tout en ne menant nulle
+// part. On vérifie donc activement en tentant de joindre Supabase, avec un
+// délai court pour ne jamais bloquer l'interface.
+async function verifierConnexionReelle(): Promise<boolean> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return false;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return navigator.onLine;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    await fetch(`${url}/auth/v1/health`, {
+      method: "GET",
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    clearTimeout(timeoutId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function useSyncStatus() {
   const [enLigne, setEnLigne] = useState(true);
   const [pending, setPending] = useState(0);
@@ -77,39 +101,54 @@ export function useSyncStatus() {
   }, [rafraichir]);
 
   useEffect(() => {
-    setEnLigne(estEnLigne());
+    let annule = false;
 
-    // Au chargement : si des ventes attendaient déjà (app rouverte après
-    // coupure), on retente tout de suite plutôt que d'attendre un événement.
-    rafraichir().then((count) => {
-      if (count > 0) synchroniser();
+    async function verifierEtMettreAJour() {
+      const reel = await verifierConnexionReelle();
+      if (!annule) setEnLigne(reel);
+      return reel;
+    }
+
+    // Au chargement : vérifie vraiment (pas juste navigator.onLine), et si
+    // des ventes attendaient déjà (app rouverte après coupure), retente
+    // tout de suite plutôt que d'attendre un événement.
+    verifierEtMettreAJour().then((enLigneReel) => {
+      rafraichir().then((count) => {
+        if (count > 0 && enLigneReel) synchroniser();
+      });
     });
 
     function onOnline() {
-      setEnLigne(true);
-      synchroniser();
+      verifierEtMettreAJour().then((reel) => {
+        if (reel) synchroniser();
+      });
     }
     function onOffline() {
       setEnLigne(false);
     }
     function onVisible() {
       if (document.visibilityState === "visible") {
-        setEnLigne(estEnLigne());
-        synchroniser();
+        verifierEtMettreAJour().then((reel) => {
+          if (reel) synchroniser();
+        });
       }
     }
 
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
     document.addEventListener("visibilitychange", onVisible);
-    // Filet de sécurité multiplateforme : retente périodiquement tant que
-    // l'onglet est ouvert, indépendamment des événements online/visibility
-    // (qui peuvent tous les deux manquer à l'appel, notamment sur iOS).
+    // Filet de sécurité multiplateforme : revérifie vraiment la connexion à
+    // intervalle régulier, indépendamment des événements online/visibility
+    // (qui peuvent tous les deux manquer à l'appel, notamment sur iOS) —
+    // et retente la synchronisation si on est réellement en ligne.
     const intervalle = setInterval(() => {
-      synchroniser();
+      verifierEtMettreAJour().then((reel) => {
+        if (reel) synchroniser();
+      });
     }, INTERVALLE_RETRY_MS);
 
     return () => {
+      annule = true;
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
       document.removeEventListener("visibilitychange", onVisible);

@@ -101,11 +101,11 @@ export default function NotificationsPush() {
           {etat === "actif" ? (
             <BellRing size={16} className="text-lime-deep" />
           ) : (
-            <Bell size={16} className="text-ink/40" />
+            <Bell size={16} className="text-ink/55" />
           )}
           <div>
             <p className="text-sm font-display font-semibold">Alertes de caisse</p>
-            <p className="text-xs text-ink/40">
+            <p className="text-xs text-ink/55">
               {etat === "actif"
                 ? "Actives — tu reçois une notification à l'ouverture/fermeture de session, surtout si l'écart est négatif."
                 : etat === "refuse"
@@ -117,7 +117,7 @@ export default function NotificationsPush() {
         {etat === "actif" ? (
           <button
             onClick={desactiver}
-            className="flex items-center gap-1 text-xs text-ink/50 hover:text-signal font-semibold whitespace-nowrap"
+            className="flex items-center gap-1 text-xs text-ink/62 hover:text-signal font-semibold whitespace-nowrap"
           >
             <BellOff size={13} /> Désactiver
           </button>

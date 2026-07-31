@@ -54,8 +54,8 @@ export default function RecuPaiementClient({
       <div id="zone-impression" className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 text-xs font-mono">
         <div className="text-center mb-3">
           <div className="font-display font-semibold text-sm">Lime-électronique</div>
-          <div className="text-ink/50">Reçu de paiement — {clientNom}</div>
-          <div className="text-ink/50">{TELEPHONE_ENTREPRISE}</div>
+          <div className="text-ink/62">Reçu de paiement — {clientNom}</div>
+          <div className="text-ink/62">{TELEPHONE_ENTREPRISE}</div>
         </div>
         <div className="border-t border-dashed border-ink/20 my-2" />
         <div className="flex justify-between">
@@ -75,7 +75,7 @@ export default function RecuPaiementClient({
         {factures.length > 0 && (
           <>
             <div className="border-t border-dashed border-ink/20 my-2" />
-            <div className="text-ink/50 mb-1">Détail par facture à crédit :</div>
+            <div className="text-ink/62 mb-1">Détail par facture à crédit :</div>
             {factures.map((f) => (
               <div key={f.numero_facture} className="flex justify-between mb-0.5">
                 <span>

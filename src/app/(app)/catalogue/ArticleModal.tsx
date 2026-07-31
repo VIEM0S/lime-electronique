@@ -149,7 +149,7 @@ export default function ArticleModal({
                     setSaisieNouvelleCategorie(false);
                     setNouvelleCategorieTexte("");
                   }}
-                  className="text-[11px] text-ink/40 hover:text-ink whitespace-nowrap px-1"
+                  className="text-[11px] text-ink/55 hover:text-ink whitespace-nowrap px-1"
                   title="Revenir à la liste"
                 >
                   Annuler
@@ -260,7 +260,7 @@ export default function ArticleModal({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+      <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
         {label}
       </label>
       {children}

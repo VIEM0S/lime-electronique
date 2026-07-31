@@ -95,7 +95,7 @@ export default async function SessionCaissePage() {
   return (
     <div className="space-y-6">
       <h1 className="text-lg font-display font-semibold text-ink">Session de caisse</h1>
-      <p className="text-xs text-ink/40 italic">
+      <p className="text-xs text-ink/55 italic">
         Ouverture avec fonds initial déclaré, fermeture avec calcul automatique de l&apos;écart
       </p>
       <SessionCaisseForm sessionOuverte={sessionOuverte ?? null} repartitionParMode={repartitionParMode} />
@@ -103,13 +103,13 @@ export default async function SessionCaissePage() {
       {profil?.role === "proprietaire" && fiabiliteParCaissier.some((c) => c.nbEcartsNegatifs > 0) && (
         <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
           <h2 className="text-sm font-display font-semibold mb-1">Fiabilité par caissier</h2>
-          <p className="text-xs text-ink/40 italic mb-2">
+          <p className="text-xs text-ink/55 italic mb-2">
             Un écart isolé arrive à tout le monde. Une répétition pour la même personne mérite une
             vraie conversation — croise avec l&apos;historique Mobile Money avant de conclure quoi que ce soit.
           </p>
           <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
             <table className="w-full text-xs">
-              <thead className="text-ink/40 text-left">
+              <thead className="text-ink/55 text-left">
                 <tr>
                   <th className="py-1">Nom</th>
                   <th>Sessions fermées</th>
@@ -124,10 +124,10 @@ export default async function SessionCaissePage() {
                     <td className="py-1">{c.nom}</td>
                     <td>{c.nbSessions}</td>
                     <td className={c.nbEcartsNegatifs > 1 ? "text-signal font-semibold" : ""}>{c.nbEcartsNegatifs}</td>
-                    <td className={c.totalManque > 0 ? "text-signal font-semibold" : "text-ink/40"}>
+                    <td className={c.totalManque > 0 ? "text-signal font-semibold" : "text-ink/55"}>
                       {c.totalManque.toLocaleString("fr-FR")} FCFA
                     </td>
-                    <td className="text-ink/50">
+                    <td className="text-ink/62">
                       {c.dernierEcartNegatif ? new Date(c.dernierEcartNegatif).toLocaleDateString("fr-FR") : "—"}
                     </td>
                   </tr>
@@ -155,7 +155,7 @@ export default async function SessionCaissePage() {
                     <td>{Number(s.montant_theorique).toLocaleString("fr-FR")} FCFA</td>
                     <td>{Number(s.montant_fermeture_declare).toLocaleString("fr-FR")} FCFA</td>
                     <td className="text-signal font-semibold">{Number(s.ecart).toLocaleString("fr-FR")} FCFA</td>
-                    <td className="text-ink/50 italic">{s.commentaire_fermeture ?? "—"}</td>
+                    <td className="text-ink/62 italic">{s.commentaire_fermeture ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -168,7 +168,7 @@ export default async function SessionCaissePage() {
         <h2 className="text-sm font-display font-semibold mb-2">Historique des écarts</h2>
         <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
           <table className="w-full text-xs">
-            <thead className="text-ink/40 text-left">
+            <thead className="text-ink/55 text-left">
               <tr><th className="py-1">Ouverture</th><th>Fermeture</th><th>Fonds initial</th><th>Théorique</th><th>Compté</th><th>Écart</th><th>Commentaire</th></tr>
             </thead>
             <tbody>
@@ -182,7 +182,7 @@ export default async function SessionCaissePage() {
                   <td className={Number(s.ecart) !== 0 ? "text-ember font-semibold" : "text-ok"}>
                     {s.ecart !== null ? `${Number(s.ecart) > 0 ? "+" : ""}${Number(s.ecart).toLocaleString("fr-FR")} FCFA` : "—"}
                   </td>
-                  <td className="text-ink/50 italic">{s.commentaire_fermeture ?? "—"}</td>
+                  <td className="text-ink/62 italic">{s.commentaire_fermeture ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

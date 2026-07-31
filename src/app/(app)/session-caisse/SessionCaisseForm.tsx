@@ -97,7 +97,7 @@ export default function SessionCaisseForm({
           </div>
         )}
         {resultatFermeture.commentaire_fermeture && (
-          <p className="text-ink/50 italic mt-1">
+          <p className="text-ink/62 italic mt-1">
             Commentaire : « {resultatFermeture.commentaire_fermeture} »
           </p>
         )}
@@ -108,7 +108,7 @@ export default function SessionCaisseForm({
   if (!sessionOuverte) {
     return (
       <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 space-y-3">
-        <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">
+        <label className="block text-[10px] uppercase tracking-wide text-ink/55 font-semibold">
           Fonds de caisse initial
         </label>
         <input
@@ -126,7 +126,7 @@ export default function SessionCaisseForm({
         >
           {envoi ? "Ouverture..." : "Ouvrir la session"}
         </button>
-        <p className="text-[10px] text-ink/40">
+        <p className="text-[10px] text-ink/55">
           Chaque compte (propriétaire, caisse...) a sa propre session, indépendante des autres —
           ouvrir la tienne n&apos;ouvre pas celle d&apos;un collègue, et inversement.
         </p>
@@ -136,20 +136,20 @@ export default function SessionCaisseForm({
 
   return (
     <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 space-y-3">
-      <p className="text-xs text-ink/50">
+      <p className="text-xs text-ink/62">
         Session ouverte le {new Date(sessionOuverte.date_ouverture).toLocaleString("fr-FR")} — fonds initial :{" "}
         {Number(sessionOuverte.montant_ouverture).toLocaleString("fr-FR")} FCFA
       </p>
 
       {repartitionParMode.length > 0 && (
         <div className="bg-argent/10 rounded-md p-3">
-          <div className="text-[10px] uppercase tracking-wide text-ink/40 font-semibold mb-1.5">
+          <div className="text-[10px] uppercase tracking-wide text-ink/55 font-semibold mb-1.5">
             Ventes de cette session, par mode
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {repartitionParMode.map((r) => (
               <div key={r.mode} className="text-xs">
-                <div className="text-ink/40">{LABEL_MODE[r.mode] ?? r.mode}</div>
+                <div className="text-ink/55">{LABEL_MODE[r.mode] ?? r.mode}</div>
                 <div className="num font-semibold">{r.montant.toLocaleString("fr-FR")} FCFA</div>
               </div>
             ))}
@@ -164,14 +164,14 @@ export default function SessionCaisseForm({
               FCFA
             </span>
           </div>
-          <p className="text-[10px] text-ink/35 mt-1.5">
+          <p className="text-[10px] text-ink/50 mt-1.5">
             Seules les espèces comptent dans le calcul de l&apos;écart théorique — les autres modes
             sont affichés ici à titre de justificatif seulement.
           </p>
         </div>
       )}
 
-      <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">
+      <label className="block text-[10px] uppercase tracking-wide text-ink/55 font-semibold">
         Montant compté physiquement (fermeture)
       </label>
       <input
@@ -182,7 +182,7 @@ export default function SessionCaisseForm({
         placeholder="63000"
       />
 
-      <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">
+      <label className="block text-[10px] uppercase tracking-wide text-ink/55 font-semibold">
         Commentaire (optionnel) — utile si l&apos;écart est négatif, pour expliquer sur le moment
       </label>
       <textarea

@@ -17,7 +17,7 @@ export default async function ApprovisionnementPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-display font-semibold text-ink">Approvisionnement</h1>
-        <p className="text-xs text-ink/40 italic">
+        <p className="text-xs text-ink/55 italic">
           SSD UC-04 : créer arrivage → ajouter lignes → valider (met à jour le stock automatiquement)
         </p>
       </div>
@@ -28,12 +28,12 @@ export default async function ApprovisionnementPage() {
         <h2 className="text-sm font-display font-semibold mb-2">Arrivages précédents</h2>
         <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
 <table className="w-full text-xs">
-          <thead className="text-ink/40 text-left">
+          <thead className="text-ink/55 text-left">
             <tr><th className="py-1">Date</th><th>Nombre de références</th></tr>
           </thead>
           <tbody>
             {(historique ?? []).length === 0 && (
-              <tr><td colSpan={2} className="py-3 text-center text-ink/30 italic">Aucun arrivage enregistré</td></tr>
+              <tr><td colSpan={2} className="py-3 text-center text-ink/45 italic">Aucun arrivage enregistré</td></tr>
             )}
             {(historique ?? []).map((a: any) => (
               <tr key={a.id} className="border-t border-ink/5">

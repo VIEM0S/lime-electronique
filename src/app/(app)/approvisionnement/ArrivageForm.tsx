@@ -131,7 +131,7 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
       </h2>
 
       <div className="space-y-2">
-        <label className="block text-[10px] uppercase tracking-wide text-ink/40 font-semibold">
+        <label className="block text-[10px] uppercase tracking-wide text-ink/55 font-semibold">
           Lignes (article, quantité, coût d&apos;achat unitaire)
         </label>
         {lignes.map((l, i) =>
@@ -139,7 +139,7 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
             <div key={i} className="border border-lime-deep/40 bg-lime/5 rounded-md p-2.5 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-lime-deep">Nouvel article</span>
-                <button onClick={() => setCreationSurLigne(null)} className="text-ink/30 hover:text-ink p-0.5">
+                <button onClick={() => setCreationSurLigne(null)} className="text-ink/45 hover:text-ink p-0.5">
                   <X size={13} />
                 </button>
               </div>
@@ -209,7 +209,7 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
               <button
                 onClick={() => retirerLigne(i)}
                 disabled={lignes.length === 1}
-                className="text-ink/30 hover:text-signal disabled:opacity-30 p-1"
+                className="text-ink/45 hover:text-signal disabled:opacity-30 p-1"
               >
                 <Trash2 size={14} />
               </button>

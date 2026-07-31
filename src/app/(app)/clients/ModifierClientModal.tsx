@@ -69,7 +69,7 @@ export default function ModifierClientModal({
     <Modal open={open} onClose={onClose} title="Modifier le client">
       <div className="space-y-3">
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">Nom</label>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">Nom</label>
           <input
             value={nom}
             onChange={(e) => setNom(e.target.value)}
@@ -77,7 +77,7 @@ export default function ModifierClientModal({
           />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">Téléphone</label>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">Téléphone</label>
           <input
             value={telephone}
             onChange={(e) => setTelephone(e.target.value)}
@@ -85,7 +85,7 @@ export default function ModifierClientModal({
           />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">Quartier (optionnel)</label>
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">Quartier (optionnel)</label>
           <input
             value={quartier}
             onChange={(e) => setQuartier(e.target.value)}
@@ -93,7 +93,7 @@ export default function ModifierClientModal({
           />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
             Limite de crédit (FCFA, optionnel)
           </label>
           <input
@@ -104,7 +104,7 @@ export default function ModifierClientModal({
             placeholder="Aucune limite"
             className="w-full border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
           />
-          <p className="text-[10px] text-ink/40 mt-1">
+          <p className="text-[10px] text-ink/55 mt-1">
             Indicatif pour le moment — utilisé sur l&apos;écran Crédits pour repérer les dépassements.
           </p>
         </div>

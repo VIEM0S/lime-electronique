@@ -7,6 +7,7 @@ import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import FactureApercu from "../caisse/FactureApercu";
 import { TELEPHONE_ENTREPRISE, partagerWhatsApp } from "@/lib/partage";
+import Pagination, { usePagination } from "@/components/ui/Pagination";
 import type { ModePaiement } from "@/types/database.types";
 
 type Ligne = {
@@ -42,6 +43,7 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
       (l) => l.reference.toLowerCase().includes(q) || l.clientNom.toLowerCase().includes(q)
     );
   }, [lignes, recherche]);
+  const { page, setPage, totalPages, itemsPage: lignesPage } = usePagination(filtrees);
 
   async function ouvrir(ligne: Ligne) {
     setLigneOuverte(ligne);
@@ -80,11 +82,11 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
     <div className="space-y-4">
       <div>
         <h1 className="text-lg font-display font-semibold text-ink">Factures</h1>
-        <p className="text-xs text-ink/40 italic">Ventes et paiements de créances — tout au même endroit</p>
+        <p className="text-xs text-ink/55 italic">Ventes et paiements de créances — tout au même endroit</p>
       </div>
 
       <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/30" />
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/45" />
         <input
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
@@ -96,7 +98,7 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
       <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="bg-argent/10 text-ink/40 text-left">
+            <thead className="bg-argent/10 text-ink/55 text-left">
               <tr>
                 <th className="p-2.5">N° Facture</th>
                 <th>Date</th>
@@ -109,28 +111,28 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
             <tbody>
               {filtrees.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center text-ink/30 italic">
+                  <td colSpan={6} className="p-6 text-center text-ink/45 italic">
                     Aucune facture trouvée.
                   </td>
                 </tr>
               )}
-              {filtrees.map((l) => (
+              {lignesPage.map((l) => (
                 <tr key={`${l.type}-${l.id}`} className="border-t border-ink/5 hover:bg-lime/5 transition-colors">
                   <td className="p-2.5">
                     <span className="font-mono text-[11px] bg-lime/10 text-lime-deep px-1.5 py-0.5 rounded">
                       {l.reference}
                     </span>
                   </td>
-                  <td className="text-ink/60">{new Date(l.date).toLocaleString("fr-FR")}</td>
+                  <td className="text-ink/70">{new Date(l.date).toLocaleString("fr-FR")}</td>
                   <td className="font-semibold">{l.clientNom}</td>
-                  <td className="text-ink/50">{l.paiement}</td>
+                  <td className="text-ink/62">{l.paiement}</td>
                   <td className="text-right num font-semibold">{l.total.toLocaleString("fr-FR")} FCFA</td>
                   <td className="text-right pr-2.5">
                     <div className="inline-flex gap-2">
-                      <button onClick={() => ouvrir(l)} className="text-ink/40 hover:text-lime-deep" title="Voir">
+                      <button onClick={() => ouvrir(l)} className="text-ink/55 hover:text-lime-deep" title="Voir">
                         <Eye size={14} />
                       </button>
-                      <button onClick={() => ouvrir(l)} className="text-ink/40 hover:text-lime-deep" title="Télécharger / imprimer">
+                      <button onClick={() => ouvrir(l)} className="text-ink/55 hover:text-lime-deep" title="Télécharger / imprimer">
                         <Download size={14} />
                       </button>
                     </div>
@@ -140,6 +142,7 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </div>
 
       <Modal
@@ -149,7 +152,7 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
       >
         {ligneOuverte?.type === "vente" ? (
           chargement || !detailVente ? (
-            <p className="text-xs text-ink/40 italic py-6 text-center">Chargement...</p>
+            <p className="text-xs text-ink/55 italic py-6 text-center">Chargement...</p>
           ) : (
             <FactureApercu
               numero={detailVente.numero}
@@ -191,8 +194,8 @@ function ApercuRemboursement({ ligne }: { ligne: Ligne }) {
       <div id="zone-impression" className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 text-xs font-mono">
         <div className="text-center mb-3">
           <div className="font-display font-semibold text-sm">Lime-électronique</div>
-          <div className="text-ink/50">Reçu de paiement de créance</div>
-          <div className="text-ink/50">{TELEPHONE_ENTREPRISE}</div>
+          <div className="text-ink/62">Reçu de paiement de créance</div>
+          <div className="text-ink/62">{TELEPHONE_ENTREPRISE}</div>
         </div>
         <div className="border-t border-dashed border-ink/20 my-2" />
         <div>Référence : {ligne.reference}</div>

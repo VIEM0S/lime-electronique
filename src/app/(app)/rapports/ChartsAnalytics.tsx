@@ -45,7 +45,7 @@ export function ActiviteSemaine({ data }: { data: { jour: string; ca: number }[]
 
 export function RepartitionModes({ data }: { data: { mode: string; montant: number }[] }) {
   if (data.length === 0) {
-    return <p className="text-xs text-ink/40 text-center py-10">Aucun paiement enregistré</p>;
+    return <p className="text-xs text-ink/55 text-center py-10">Aucun paiement enregistré</p>;
   }
   return (
     <ResponsiveContainer width="100%" height={220}>

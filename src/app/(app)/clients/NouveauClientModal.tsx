@@ -50,7 +50,7 @@ export default function NouveauClientModal({
     <Modal open={open} onClose={onClose} title="Nouveau client">
       <div className="space-y-3">
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
             Nom
           </label>
           <input
@@ -62,7 +62,7 @@ export default function NouveauClientModal({
           />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
             Téléphone (optionnel)
           </label>
           <input
@@ -73,7 +73,7 @@ export default function NouveauClientModal({
           />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+          <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
             Quartier (optionnel)
           </label>
           <input

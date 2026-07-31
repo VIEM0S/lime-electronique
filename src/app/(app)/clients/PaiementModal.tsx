@@ -115,7 +115,7 @@ export default function PaiementModal({
         />
       ) : (
         <div className="space-y-3">
-          <p className="text-xs text-ink/50">
+          <p className="text-xs text-ink/62">
             Solde dû actuel :{" "}
             <span className="num font-semibold text-ember">
               {Number(client.solde_du).toLocaleString("fr-FR")} FCFA
@@ -123,7 +123,7 @@ export default function PaiementModal({
           </p>
 
           <div>
-            <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+            <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
               Montant reçu
             </label>
             <input
@@ -137,7 +137,7 @@ export default function PaiementModal({
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase tracking-wide text-ink/40 mb-1 font-semibold">
+            <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
               Mode de paiement
             </label>
             <div className="flex gap-1.5">
@@ -148,7 +148,7 @@ export default function PaiementModal({
                   className={`flex-1 text-xs py-1.5 rounded-md border transition-colors ${
                     mode === m.key
                       ? "bg-lime/15 border-lime-deep text-lime-deep font-semibold"
-                      : "border-ink/15 text-ink/50 hover:border-ink/30"
+                      : "border-ink/15 text-ink/62 hover:border-ink/30"
                   }`}
                 >
                   {m.label}

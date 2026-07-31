@@ -63,8 +63,8 @@ export default function FactureApercu({
       <div id="zone-impression" className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 text-xs font-mono">
         <div className="text-center mb-3">
           <div className="font-display font-semibold text-sm">Lime-électronique</div>
-          <div className="text-ink/50">Bamako — Gabriel Touré</div>
-          <div className="text-ink/50">{TELEPHONE_ENTREPRISE}</div>
+          <div className="text-ink/62">Bamako — Gabriel Touré</div>
+          <div className="text-ink/62">{TELEPHONE_ENTREPRISE}</div>
         </div>
         <div className="border-t border-dashed border-ink/20 my-2" />
         <div>Facture : {numero}</div>
@@ -85,7 +85,7 @@ export default function FactureApercu({
         {paiements.length > 0 && (
           <>
             <div className="border-t border-dashed border-ink/20 my-2" />
-            <div className="text-ink/50 mb-1">Mode(s) de paiement :</div>
+            <div className="text-ink/62 mb-1">Mode(s) de paiement :</div>
             {paiements.map((p, i) => (
               <div key={i} className="flex justify-between">
                 <span>{LABEL_MODE[p.mode]}</span>
@@ -95,7 +95,7 @@ export default function FactureApercu({
           </>
         )}
 
-        <div className={`text-center mt-3 ${aDuCredit ? "text-ember font-semibold" : "text-ink/40"}`}>
+        <div className={`text-center mt-3 ${aDuCredit ? "text-ember font-semibold" : "text-ink/55"}`}>
           Statut : {libelleStatut(statut, aDuCredit)}
         </div>
       </div>
