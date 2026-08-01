@@ -3,7 +3,6 @@ import { getProfilCourant } from "@/lib/supabase/current-user";
 import { redirect } from "next/navigation";
 import { Wallet, AlertTriangle, PackageX, AlertOctagon, type LucideIcon } from "lucide-react";
 import VentesChart from "./VentesChart";
-import NotificationsPush from "@/components/NotificationsPush";
 
 const SEUIL_STOCK_FAIBLE = 5; // FR-28
 
@@ -79,8 +78,6 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-lg font-display font-semibold text-ink">Tableau de bord</h1>
-
-      <NotificationsPush />
 
       <div className="bg-lime rounded-lg p-5 shadow-[0_4px_16px_rgba(8,48,120,0.18)] text-white">
         <div className="flex items-center gap-2 text-white/70 text-[11px] uppercase tracking-wide font-semibold">

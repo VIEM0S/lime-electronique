@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServerClient } from "@supabase/supabase-js";
 import UtilisateursClient from "../utilisateurs/UtilisateursClient";
+import NotificationsPush from "@/components/NotificationsPush";
 
 export default async function ParametresPage() {
   const supabase = await createClient();
@@ -28,6 +29,7 @@ export default async function ParametresPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-lg font-display font-semibold text-ink">Paramètres</h1>
+      <NotificationsPush />
       <UtilisateursClient utilisateurs={utilisateurs ?? []} emailsParId={emailsParId} />
     </div>
   );
