@@ -3,6 +3,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getProfilCourant } from "@/lib/supabase/current-user";
 import SyncBar from "@/components/SyncBar";
+import GestesTactiles from "@/components/GestesTactiles";
 import { NavLinksDesktop, NavMobileMenuButton } from "@/components/Nav";
 import DeconnexionButton from "@/components/DeconnexionButton";
 
@@ -47,7 +48,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       <SyncBar />
-      <main className="max-w-5xl mx-auto p-4 sm:p-6 animate-fade-up">{children}</main>
+      <GestesTactiles>
+        <main className="max-w-5xl mx-auto p-4 sm:p-6 animate-fade-up">{children}</main>
+      </GestesTactiles>
     </div>
   );
 }
