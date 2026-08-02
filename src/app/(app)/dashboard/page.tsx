@@ -135,7 +135,7 @@ export default async function DashboardPage() {
         <div className="bg-signal/5 border border-signal/20 rounded-lg p-4">
           <h2 className="flex items-center gap-1.5 text-sm font-display font-semibold mb-2 text-signal">
             <AlertOctagon size={15} />
-            {ventesEnConflit.length} vente(s) en conflit de synchronisation (BR-08)
+            {ventesEnConflit.length} vente(s) en conflit de synchronisation
           </h2>
           <p className="text-xs text-signal/80 mb-2">
             Stock devenu insuffisant entre l&apos;enregistrement hors-ligne et la synchronisation —

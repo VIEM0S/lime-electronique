@@ -143,25 +143,25 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
                   <X size={13} />
                 </button>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <input
                   placeholder="Code (ex: BUR-015)"
                   value={nvCode}
                   onChange={(e) => setNvCode(e.target.value)}
-                  className="w-28 border border-ink/15 rounded-md px-2 py-1.5 text-xs"
+                  className="w-full sm:w-28 border border-ink/15 rounded-md px-2 py-1.5 text-xs"
                 />
                 <input
                   placeholder="Nom de l'article"
                   value={nvNom}
                   onChange={(e) => setNvNom(e.target.value)}
-                  className="flex-1 border border-ink/15 rounded-md px-2 py-1.5 text-xs"
+                  className="flex-1 min-w-0 border border-ink/15 rounded-md px-2 py-1.5 text-xs"
                 />
                 <input
                   type="number"
                   placeholder="Prix vente"
                   value={nvPrixVente}
                   onChange={(e) => setNvPrixVente(e.target.value)}
-                  className="w-24 border border-ink/15 rounded-md px-2 py-1.5 text-xs num"
+                  className="flex-1 min-w-0 sm:flex-none sm:w-24 border border-ink/15 rounded-md px-2 py-1.5 text-xs num"
                 />
               </div>
               {nvErreur && <p className="text-[11px] text-signal">{nvErreur}</p>}
@@ -174,7 +174,7 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
               </button>
             </div>
           ) : (
-            <div key={i} className="flex gap-2 items-center">
+            <div key={i} className="flex flex-wrap gap-2 items-center">
               <select
                 value={l.article_id}
                 onChange={(e) => {
@@ -184,7 +184,7 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
                     majLigne(i, { article_id: e.target.value });
                   }
                 }}
-                className="flex-1 border border-ink/15 rounded-md px-2 py-1.5 text-xs"
+                className="w-full sm:flex-1 sm:w-auto border border-ink/15 rounded-md px-2 py-1.5 text-xs"
               >
                 <option value="">— Sélectionner un article —</option>
                 {articlesLocaux.map((a) => (
@@ -197,19 +197,19 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
                 placeholder="Qté"
                 value={l.quantite}
                 onChange={(e) => majLigne(i, { quantite: e.target.value })}
-                className="w-20 border border-ink/15 rounded-md px-2 py-1.5 text-xs num"
+                className="flex-1 min-w-0 sm:flex-none sm:w-20 border border-ink/15 rounded-md px-2 py-1.5 text-xs num"
               />
               <input
                 type="number"
                 placeholder="Coût unit."
                 value={l.cout_unitaire}
                 onChange={(e) => majLigne(i, { cout_unitaire: e.target.value })}
-                className="w-24 border border-ink/15 rounded-md px-2 py-1.5 text-xs num"
+                className="flex-1 min-w-0 sm:flex-none sm:w-24 border border-ink/15 rounded-md px-2 py-1.5 text-xs num"
               />
               <button
                 onClick={() => retirerLigne(i)}
                 disabled={lignes.length === 1}
-                className="text-ink/45 hover:text-signal disabled:opacity-30 p-1"
+                className="text-ink/45 hover:text-signal disabled:opacity-30 p-1 shrink-0"
               >
                 <Trash2 size={14} />
               </button>

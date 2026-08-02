@@ -18,7 +18,7 @@ export default async function ApprovisionnementPage() {
       <div>
         <h1 className="text-lg font-display font-semibold text-ink">Approvisionnement</h1>
         <p className="text-xs text-ink/55 italic">
-          SSD UC-04 : créer arrivage → ajouter lignes → valider (met à jour le stock automatiquement)
+          Créer un arrivage → ajouter des lignes → valider (met à jour le stock automatiquement)
         </p>
       </div>
 

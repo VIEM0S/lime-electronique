@@ -34,9 +34,6 @@ export default function UtilisateursClient({
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-display font-semibold text-ink">Gestion des utilisateurs</h1>
-        <p className="text-xs text-ink/55 italic">
-          Création des comptes réservée à Supabase (Authentication → Users)
-        </p>
       </div>
 
       <input
