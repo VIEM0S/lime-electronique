@@ -37,15 +37,21 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getSession();
   const user = session?.user ?? null;
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
+  const { pathname } = request.nextUrl;
+  // Pages accessibles sans être connecté. Important : /reinitialiser-mot-de-passe
+  // doit rester ici même si une session "recovery" temporaire existe déjà —
+  // sinon la règle "déjà connecté → /dashboard" empêcherait de finir de
+  // choisir le nouveau mot de passe avant d'y arriver.
+  const routesPubliques = ["/login", "/mot-de-passe-oublie", "/reinitialiser-mot-de-passe"];
+  const estRoutePublique = routesPubliques.some((r) => pathname.startsWith(r));
 
-  if (!user && !isAuthRoute) {
+  if (!user && !estRoutePublique) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  if (user && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

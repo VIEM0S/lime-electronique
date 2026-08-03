@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { AlertCircle, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 
 export default function LoginPage() {
@@ -100,8 +101,11 @@ export default function LoginPage() {
           </form>
 
           <p className="text-[11px] text-ink/50 text-center mt-4">
-            Mot de passe oublié ? Contacte le propriétaire — il peut le changer depuis
-            l&apos;écran Utilisateurs.
+            <Link href="/mot-de-passe-oublie" className="text-lime-deep font-semibold hover:underline">
+              Mot de passe oublié ?
+            </Link>
+            <br />
+            Caisse : demande plutôt au propriétaire de te le changer depuis Paramètres.
           </p>
         </div>
       </div>
