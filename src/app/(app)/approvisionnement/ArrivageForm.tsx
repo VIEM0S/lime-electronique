@@ -28,6 +28,7 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
   const [nvCode, setNvCode] = useState("");
   const [nvNom, setNvNom] = useState("");
   const [nvPrixVente, setNvPrixVente] = useState("");
+  const [nvQuantite, setNvQuantite] = useState("");
   const [nvErreur, setNvErreur] = useState<string | null>(null);
   const [nvEnvoi, setNvEnvoi] = useState(false);
 
@@ -49,34 +50,61 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
     setNvCode("");
     setNvNom("");
     setNvPrixVente("");
+    setNvQuantite("");
     setNvErreur(null);
+  }
+
+  // Génère un code auto (ART-xxxx) quand le code est laissé vide — le code
+  // article n'a pas besoin d'être choisi à la main pour créer un article.
+  function genererCodeAuto() {
+    const suffixe = Math.floor(1000 + Math.random() * 9000);
+    return `ART-${suffixe}`;
   }
 
   async function creerArticle(i: number) {
     setNvErreur(null);
-    if (!nvCode.trim() || !nvNom.trim() || !nvPrixVente) {
-      setNvErreur("Code, nom et prix de vente sont obligatoires.");
+    if (!nvNom.trim() || !nvPrixVente) {
+      setNvErreur("Le nom et le prix de vente sont obligatoires (le code peut rester vide).");
       return;
     }
     setNvEnvoi(true);
-    const { data, error } = await supabase
-      .from("articles")
-      .insert({
-        code_article: nvCode.trim(),
-        nom: nvNom.trim(),
-        prix_vente: Number(nvPrixVente),
-        quantite_stock: 0,
-      })
-      .select("id, code_article, nom")
-      .single();
-    setNvEnvoi(false);
-    if (error || !data) {
-      setNvErreur(error?.message ?? "Erreur lors de la création.");
-      return;
+
+    let tentatives = 0;
+    let derniereErreur: string | null = null;
+    while (tentatives < 3) {
+      const codeAEnvoyer = nvCode.trim() || genererCodeAuto();
+      const { data, error } = await supabase
+        .from("articles")
+        .insert({
+          code_article: codeAEnvoyer,
+          nom: nvNom.trim(),
+          prix_vente: Number(nvPrixVente),
+          quantite_stock: 0,
+        })
+        .select("id, code_article, nom")
+        .single();
+
+      if (!error && data) {
+        setNvEnvoi(false);
+        setArticlesLocaux((prev) => [...prev, data]);
+        // Pré-remplit aussi la quantité de cette ligne avec ce qui vient
+        // d'être saisi, pour que ce soit visible immédiatement — pas besoin
+        // de la ressaisir dans la ligne juste en dessous.
+        majLigne(i, { article_id: data.id, quantite: nvQuantite });
+        setCreationSurLigne(null);
+        return;
+      }
+
+      // Si c'est un conflit sur un code auto-généré (déjà pris par hasard),
+      // on retente avec un nouveau code plutôt que d'échouer directement —
+      // mais si l'utilisateur avait tapé son propre code, on ne retente pas.
+      derniereErreur = error?.message ?? "Erreur lors de la création.";
+      if (nvCode.trim() || !derniereErreur.toLowerCase().includes("duplicate")) break;
+      tentatives++;
     }
-    setArticlesLocaux((prev) => [...prev, data]);
-    majLigne(i, { article_id: data.id });
-    setCreationSurLigne(null);
+
+    setNvEnvoi(false);
+    setNvErreur(derniereErreur);
   }
 
   async function valider() {
@@ -145,10 +173,10 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
               </div>
               <div className="flex flex-wrap gap-2">
                 <input
-                  placeholder="Code (ex: BUR-015)"
+                  placeholder="Code (optionnel — auto si vide)"
                   value={nvCode}
                   onChange={(e) => setNvCode(e.target.value)}
-                  className="w-full sm:w-28 border border-ink/15 rounded-md px-2 py-1.5 text-xs"
+                  className="w-full sm:w-40 border border-ink/15 rounded-md px-2 py-1.5 text-xs"
                 />
                 <input
                   placeholder="Nom de l'article"
@@ -156,12 +184,21 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
                   onChange={(e) => setNvNom(e.target.value)}
                   className="flex-1 min-w-0 border border-ink/15 rounded-md px-2 py-1.5 text-xs"
                 />
+              </div>
+              <div className="flex flex-wrap gap-2">
                 <input
                   type="number"
                   placeholder="Prix vente"
                   value={nvPrixVente}
                   onChange={(e) => setNvPrixVente(e.target.value)}
                   className="flex-1 min-w-0 sm:flex-none sm:w-24 border border-ink/15 rounded-md px-2 py-1.5 text-xs num"
+                />
+                <input
+                  type="number"
+                  placeholder="Quantité reçue"
+                  value={nvQuantite}
+                  onChange={(e) => setNvQuantite(e.target.value)}
+                  className="flex-1 min-w-0 sm:flex-none sm:w-28 border border-lime-deep/50 rounded-md px-2 py-1.5 text-xs num"
                 />
               </div>
               {nvErreur && <p className="text-[11px] text-signal">{nvErreur}</p>}

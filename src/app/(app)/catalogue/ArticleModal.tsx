@@ -86,8 +86,8 @@ export default function ArticleModal({
 
   async function enregistrer() {
     setErreur(null);
-    if (!form.code_article.trim() || !form.nom.trim() || !form.prix_vente) {
-      setErreur("Code, nom et prix de vente sont obligatoires.");
+    if (!form.nom.trim() || !form.prix_vente) {
+      setErreur("Le nom et le prix de vente sont obligatoires (le code peut rester vide).");
       return;
     }
     if (saisieNouvelleCategorie && !nouvelleCategorieTexte.trim()) {
@@ -96,41 +96,54 @@ export default function ArticleModal({
     }
 
     setEnvoi(true);
-    const payload = {
-      code_article: form.code_article.trim(),
-      nom: form.nom.trim(),
-      description: form.description.trim() || null,
-      categorie: saisieNouvelleCategorie ? nouvelleCategorieTexte.trim() : form.categorie,
-      prix_achat: form.prix_achat ? Number(form.prix_achat) : null,
-      prix_vente: Number(form.prix_vente),
-      quantite_stock: Number(form.quantite_stock) || 0,
-    };
 
-    const { error } = article
-      ? await supabase.from("articles").update(payload).eq("id", article.id)
-      : await supabase.from("articles").insert(payload);
+    let tentatives = 0;
+    let derniereErreur: string | null = null;
+    while (tentatives < 3) {
+      const codeAEnvoyer = form.code_article.trim() || `ART-${Math.floor(1000 + Math.random() * 9000)}`;
+      const payload = {
+        code_article: codeAEnvoyer,
+        nom: form.nom.trim(),
+        description: form.description.trim() || null,
+        categorie: saisieNouvelleCategorie ? nouvelleCategorieTexte.trim() : form.categorie,
+        prix_achat: form.prix_achat ? Number(form.prix_achat) : null,
+        prix_vente: Number(form.prix_vente),
+        quantite_stock: Number(form.quantite_stock) || 0,
+      };
 
-    setEnvoi(false);
-    if (error) {
-      setErreur(error.message);
-      return;
+      const { error } = article
+        ? await supabase.from("articles").update(payload).eq("id", article.id)
+        : await supabase.from("articles").insert(payload);
+
+      if (!error) {
+        setEnvoi(false);
+        onSaved(article ? "Article mis à jour." : "Article créé.");
+        router.refresh();
+        onClose();
+        return;
+      }
+
+      derniereErreur = error.message;
+      // Ne retente que si c'est un conflit sur un code auto-généré — si
+      // l'utilisateur avait tapé son propre code, on ne retente pas à sa place.
+      if (form.code_article.trim() || !derniereErreur.toLowerCase().includes("duplicate")) break;
+      tentatives++;
     }
 
-    onSaved(article ? "Article mis à jour." : "Article créé.");
-    router.refresh();
-    onClose();
+    setEnvoi(false);
+    setErreur(derniereErreur);
   }
 
   return (
     <Modal open={open} onClose={onClose} title={article ? "Modifier l'article" : "Nouvel article"}>
       <div className="space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Code article">
+          <Field label="Code article (optionnel)">
             <input
               value={form.code_article}
               onChange={(e) => setForm((f) => ({ ...f, code_article: e.target.value }))}
               className="input"
-              placeholder="ART-0142"
+              placeholder="Généré automatiquement si vide"
             />
           </Field>
           <Field label="Catégorie">
