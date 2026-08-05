@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
+import AjusterStockModal from "./AjusterStockModal";
 import type { Article } from "@/types/database.types";
 
 const CATEGORIES_SUGGEREES = [
@@ -41,6 +42,7 @@ export default function ArticleModal({
   const supabase = createClient();
   const router = useRouter();
   const [form, setForm] = useState(VIDE);
+  const [modaleAjustementOuverte, setModaleAjustementOuverte] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
   const [categoriesExistantes, setCategoriesExistantes] = useState<string[]>([]);
@@ -226,18 +228,42 @@ export default function ArticleModal({
               placeholder="0"
             />
           </Field>
-          <Field label="Stock initial">
-            <input
-              type="number"
-              value={form.quantite_stock}
-              onChange={(e) => setForm((f) => ({ ...f, quantite_stock: e.target.value }))}
-              className="input num"
-              placeholder="0"
-              disabled={!!article}
-              title={article ? "Utilisez Approvisionnement ou un mouvement de stock pour ajuster" : undefined}
-            />
+          <Field label={article ? "Stock actuel" : "Stock initial"}>
+            <div className="flex gap-1.5">
+              <input
+                type="number"
+                value={form.quantite_stock}
+                onChange={(e) => setForm((f) => ({ ...f, quantite_stock: e.target.value }))}
+                className="input num"
+                placeholder="0"
+                disabled={!!article}
+                title={article ? "Utilise \"Ajuster\" pour corriger le stock, avec trace dans l'historique" : undefined}
+              />
+              {article && (
+                <button
+                  type="button"
+                  onClick={() => setModaleAjustementOuverte(true)}
+                  className="text-[11px] whitespace-nowrap px-2.5 rounded-md border border-lime-deep/40 text-lime-deep font-semibold hover:bg-lime/5"
+                >
+                  Ajuster
+                </button>
+              )}
+            </div>
           </Field>
         </div>
+
+        {article && (
+          <AjusterStockModal
+            open={modaleAjustementOuverte}
+            onClose={() => setModaleAjustementOuverte(false)}
+            article={article}
+            onAjuste={(nouvelleQuantite) => {
+              setForm((f) => ({ ...f, quantite_stock: String(nouvelleQuantite) }));
+              setModaleAjustementOuverte(false);
+              router.refresh();
+            }}
+          />
+        )}
 
         {erreur && <p className="text-xs text-signal">{erreur}</p>}
 
