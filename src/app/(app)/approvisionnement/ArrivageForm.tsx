@@ -6,12 +6,12 @@ import { createClient } from "@/lib/supabase/client";
 import { Plus, Trash2, Truck, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Toast, { type ToastMsg } from "@/components/ui/Toast";
+import SelecteurArticleLigne from "./SelecteurArticleLigne";
 
 type ArticleLite = { id: string; code_article: string; nom: string };
 type Ligne = { article_id: string; quantite: string; cout_unitaire: string };
 
 const LIGNE_VIDE: Ligne = { article_id: "", quantite: "", cout_unitaire: "" };
-const VALEUR_NOUVEL_ARTICLE = "__nouveau__";
 
 export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) {
   const supabase = createClient();
@@ -212,23 +212,19 @@ export default function ArrivageForm({ articles }: { articles: ArticleLite[] }) 
             </div>
           ) : (
             <div key={i} className="flex flex-wrap gap-2 items-center">
-              <select
-                value={l.article_id}
-                onChange={(e) => {
-                  if (e.target.value === VALEUR_NOUVEL_ARTICLE) {
-                    ouvrirCreation(i);
-                  } else {
-                    majLigne(i, { article_id: e.target.value });
-                  }
-                }}
-                className="w-full sm:flex-1 sm:w-auto border border-ink/15 rounded-md px-2 py-1.5 text-xs"
+              <SelecteurArticleLigne
+                articles={articlesLocaux}
+                valeurSelectionnee={l.article_id}
+                onSelectionner={(id) => majLigne(i, { article_id: id })}
+              />
+              <button
+                type="button"
+                onClick={() => ouvrirCreation(i)}
+                title="Créer un nouvel article"
+                className="flex items-center gap-1 text-[11px] text-lime-deep hover:text-ink font-semibold whitespace-nowrap px-1.5 shrink-0"
               >
-                <option value="">— Sélectionner un article —</option>
-                {articlesLocaux.map((a) => (
-                  <option key={a.id} value={a.id}>{a.code_article} — {a.nom}</option>
-                ))}
-                <option value={VALEUR_NOUVEL_ARTICLE}>＋ Créer un nouvel article...</option>
-              </select>
+                <Plus size={12} /> Nouvel article
+              </button>
               <input
                 type="number"
                 placeholder="Qté"
