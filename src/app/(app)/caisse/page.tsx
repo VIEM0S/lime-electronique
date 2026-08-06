@@ -18,7 +18,7 @@ export default async function CaissePage() {
       .select("id, code_article, nom, prix_vente, quantite_stock")
       .eq("actif", true)
       .order("nom"),
-    supabase.from("clients").select("id, nom, telephone, solde_du, limite_credit").order("nom"),
+    supabase.from("clients").select("id, nom, telephone, quartier, solde_du, limite_credit").order("nom"),
     supabase
       .from("ventes")
       .select("id, numero_facture, date, montant_total, statut, conflit_sync")

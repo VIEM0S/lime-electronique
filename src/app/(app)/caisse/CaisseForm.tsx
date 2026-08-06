@@ -9,7 +9,7 @@ import Button from "@/components/ui/Button";
 import FactureApercu from "./FactureApercu";
 
 type ArticleLite = { id: string; code_article: string; nom: string; prix_vente: number; quantite_stock: number };
-type ClientLite = { id: string; nom: string; telephone: string | null; solde_du: number; limite_credit: number | null };
+type ClientLite = { id: string; nom: string; telephone: string | null; quartier: string | null; solde_du: number; limite_credit: number | null };
 
 type Ligne = { article: ArticleLite; quantite: number };
 
@@ -61,6 +61,8 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
     lignes: Ligne[];
     total: number;
     clientNom: string | null;
+    clientTelephone: string | null;
+    clientQuartier: string | null;
     paiements: { mode: ModePaiement; montant: number }[];
   } | null>(null);
   const [envoi, setEnvoi] = useState(false);
@@ -137,7 +139,10 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
     setEnvoi(true);
 
-    const nomAffiche = clients.find((c) => c.id === clientId)?.nom ?? (nomClientComptant.trim() || null);
+    const clientTrouve = clients.find((c) => c.id === clientId);
+    const nomAffiche = clientTrouve?.nom ?? (nomClientComptant.trim() || null);
+    const telephoneAffiche = clientTrouve?.telephone ?? null;
+    const quartierAffiche = clientTrouve?.quartier ?? null;
 
     const paiementsAEnvoyer = MODES.filter((m) => montants[m.key] > 0).map((m) => ({
       mode: m.key,
@@ -161,6 +166,8 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
         lignes,
         total,
         clientNom: nomAffiche,
+        clientTelephone: telephoneAffiche,
+        clientQuartier: quartierAffiche,
         paiements: paiementsAEnvoyer,
       });
       reinitialiser();
@@ -229,7 +236,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
       setEnvoi(false);
       setResultat({ ...(venteFinale ?? { numero_facture: vente.numero_facture, statut: "impayee" }), horsLigne: false });
-      setRecu({ lignes, total, clientNom: nomAffiche, paiements: paiementsAEnvoyer });
+      setRecu({ lignes, total, clientNom: nomAffiche, clientTelephone: telephoneAffiche, clientQuartier: quartierAffiche, paiements: paiementsAEnvoyer });
       reinitialiser();
     } catch (err) {
       setEnvoi(false);
@@ -421,6 +428,8 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
                 numero={resultat.numero_facture}
                 statut={resultat.statut}
                 clientNom={recu.clientNom}
+                clientTelephone={recu.clientTelephone}
+                clientQuartier={recu.clientQuartier}
                 lignes={recu.lignes.map((l) => ({ nom: l.article.nom, quantite: l.quantite, prix_unitaire: l.article.prix_vente }))}
                 total={recu.total}
                 paiements={recu.paiements}

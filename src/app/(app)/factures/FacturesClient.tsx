@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { Eye, Download, Search, Printer, Share2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import FactureApercu from "../caisse/FactureApercu";
-import { TELEPHONE_ENTREPRISE, partagerWhatsApp } from "@/lib/partage";
+import { TELEPHONE_ENTREPRISE, partagerImageWhatsApp } from "@/lib/partage";
 import Pagination, { usePagination } from "@/components/ui/Pagination";
 import type { ModePaiement } from "@/types/database.types";
 
@@ -178,42 +179,47 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
 }
 
 function ApercuRemboursement({ ligne }: { ligne: Ligne }) {
-  function texteWhatsApp() {
-    return (
-      `*Lime-électronique* — Reçu ${ligne.reference}\n` +
-      `Client : ${ligne.clientNom}\n` +
-      `Date : ${new Date(ligne.date).toLocaleString("fr-FR")}\n` +
-      `Mode : ${ligne.paiement}\n` +
-      `Montant : ${ligne.total.toLocaleString("fr-FR")} FCFA\n\n` +
-      `Lime-électronique — ${TELEPHONE_ENTREPRISE}`
-    );
+  const refRecu = useRef<HTMLDivElement>(null);
+  const [partage, setPartage] = useState(false);
+
+  async function partager() {
+    setPartage(true);
+    try {
+      await partagerImageWhatsApp(refRecu.current, `Recu-${ligne.reference}`, `Lime-électronique — ${ligne.reference}`);
+    } finally {
+      setPartage(false);
+    }
   }
 
   return (
     <div className="space-y-3">
-      <div id="zone-impression" className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4 text-xs font-mono">
-        <div className="text-center mb-3">
-          <div className="font-display font-semibold text-sm">Lime-électronique</div>
-          <div className="text-ink/62">Reçu de paiement de créance</div>
-          <div className="text-ink/62">{TELEPHONE_ENTREPRISE}</div>
+      <div ref={refRecu} id="zone-impression" className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-5 text-xs font-mono">
+        <div className="flex flex-col items-center mb-3">
+          <Image src="/icons/icon-192.png" alt="Lime-électronique" width={48} height={48} className="rounded-md mb-1.5" />
+          <div className="font-display font-bold text-sm text-lime-deep">Lime-électronique</div>
+          <div className="text-ink/60">Reçu de paiement de créance</div>
+          <div className="text-ink/60">{TELEPHONE_ENTREPRISE}</div>
         </div>
-        <div className="border-t border-dashed border-ink/20 my-2" />
-        <div>Référence : {ligne.reference}</div>
-        <div>Client : {ligne.clientNom}</div>
-        <div>Date : {new Date(ligne.date).toLocaleString("fr-FR")}</div>
-        <div>Mode : {ligne.paiement}</div>
-        <div className="border-t border-dashed border-ink/20 my-2" />
-        <div className="flex justify-between font-semibold">
+        <div className="border-t border-dashed border-ink/25 my-2.5" />
+        <div className="flex justify-between"><span className="text-ink/55">Référence</span><span className="font-semibold">{ligne.reference}</span></div>
+        <div className="flex justify-between"><span className="text-ink/55">Client</span><span className="font-semibold">{ligne.clientNom}</span></div>
+        <div className="flex justify-between"><span className="text-ink/55">Date</span><span>{new Date(ligne.date).toLocaleString("fr-FR")}</span></div>
+        <div className="flex justify-between"><span className="text-ink/55">Mode</span><span>{ligne.paiement}</span></div>
+        <div className="border-t border-dashed border-ink/25 my-2.5" />
+        <div className="flex justify-between font-bold text-sm">
           <span>Montant payé</span>
-          <span>{ligne.total.toLocaleString("fr-FR")} FCFA</span>
+          <span className="text-lime-deep">{ligne.total.toLocaleString("fr-FR")} FCFA</span>
         </div>
+        <div className="border-t border-dashed border-ink/25 my-2.5" />
+        <div className="text-center text-ink/45">Merci pour votre confiance ! 🙏</div>
+        <div className="text-center font-display font-semibold text-lime-deep mt-0.5">Lime-électronique</div>
       </div>
       <div className="flex gap-2">
         <Button variant="secondary" size="sm" onClick={() => window.print()} className="flex-1">
           <Printer size={13} /> Imprimer / PDF
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => partagerWhatsApp(texteWhatsApp())} className="flex-1">
-          <Share2 size={13} /> WhatsApp
+        <Button variant="secondary" size="sm" onClick={partager} disabled={partage} className="flex-1">
+          <Share2 size={13} /> {partage ? "Préparation..." : "WhatsApp (image)"}
         </Button>
       </div>
     </div>
