@@ -38,8 +38,9 @@ export default async function SessionCaissePage() {
   if (sessionOuverte) {
     const { data: paiementsSession } = await supabase
       .from("paiements")
-      .select("mode, montant, ventes!inner(utilisateur_id)")
+      .select("mode, montant, ventes!inner(utilisateur_id, statut)")
       .eq("ventes.utilisateur_id", sessionOuverte.utilisateur_id)
+      .neq("ventes.statut", "annulee")
       .gte("date", sessionOuverte.date_ouverture);
 
     const parMode: Record<string, number> = {};

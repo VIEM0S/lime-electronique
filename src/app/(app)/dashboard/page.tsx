@@ -25,7 +25,11 @@ export default async function DashboardPage() {
 
   const [{ data: ventesJour }, { data: creances }, { data: stockFaible }, { data: ventesEnConflit }, { data: ventes7j }, { data: paiementsJour }] =
     await Promise.all([
-      supabase.from("ventes").select("montant_total").gte("date", debutJournee.toISOString()),
+      supabase
+        .from("ventes")
+        .select("montant_total")
+        .gte("date", debutJournee.toISOString())
+        .neq("statut", "annulee"),
       supabase.from("vue_creances_clients").select("*"),
       supabase
         .from("articles")
@@ -42,8 +46,13 @@ export default async function DashboardPage() {
         .gte("date", sept_jours.toISOString())
         .neq("statut", "annulee"),
       // Encaissements réels du jour par mode (exclut 'credit', qui n'est pas
-      // de l'argent en caisse) — répond à "combien j'ai encaissé et par quel mode".
-      supabase.from("paiements").select("mode, montant").gte("date", debutJournee.toISOString()),
+      // de l'argent en caisse, et les ventes annulées via la jointure) —
+      // répond à "combien j'ai encaissé et par quel mode".
+      supabase
+        .from("paiements")
+        .select("mode, montant, ventes!inner(statut)")
+        .gte("date", debutJournee.toISOString())
+        .neq("ventes.statut", "annulee"),
     ]);
 
   const totalVentesJour = (ventesJour ?? []).reduce((s, v) => s + Number(v.montant_total), 0);

@@ -20,8 +20,9 @@ export default async function RapportsPage() {
       .gte("date", debut6Mois.toISOString()),
     supabase
       .from("paiements")
-      .select("mode, montant, date")
-      .gte("date", debut6Mois.toISOString()),
+      .select("mode, montant, date, ventes!inner(statut)")
+      .gte("date", debut6Mois.toISOString())
+      .neq("ventes.statut", "annulee"),
     supabase.from("clients").select("id"),
   ]);
 
