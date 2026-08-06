@@ -7,7 +7,7 @@ export default async function FacturesPage() {
   const [{ data: ventes }, { data: remboursements }] = await Promise.all([
     supabase
       .from("ventes")
-      .select("id, numero_facture, date, montant_total, statut, clients(nom), paiements(mode)")
+      .select("id, numero_facture, date, montant_total, statut, nom_client_comptant, clients(nom), paiements(mode)")
       .neq("statut", "annulee")
       .order("date", { ascending: false }),
     supabase
@@ -45,7 +45,7 @@ export default async function FacturesPage() {
     type: "vente",
     reference: v.numero_facture,
     date: v.date,
-    clientNom: v.clients?.nom ?? "Client comptoir",
+    clientNom: v.clients?.nom ?? v.nom_client_comptant ?? "Client comptoir",
     paiement: libellePaiement((v.paiements ?? []).map((p: any) => p.mode)),
     total: Number(v.montant_total),
   }));

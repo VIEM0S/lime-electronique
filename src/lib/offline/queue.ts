@@ -36,6 +36,7 @@ export interface VenteOffline {
   id: string; // id local (uuid)
   type: "vente";
   client_id: string | null;
+  nom_client_comptant: string | null;
   lignes: LigneVenteOffline[];
   paiements: PaiementOffline[];
   createdAt: string;

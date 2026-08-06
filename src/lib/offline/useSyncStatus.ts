@@ -25,7 +25,6 @@ const INTERVALLE_RETRY_MS = 20_000;
 async function verifierConnexionReelle(): Promise<boolean> {
   if (typeof navigator !== "undefined" && !navigator.onLine) return false;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const cle = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url) return navigator.onLine;
   try {
     const controller = new AbortController();
@@ -34,11 +33,6 @@ async function verifierConnexionReelle(): Promise<boolean> {
       method: "GET",
       signal: controller.signal,
       cache: "no-store",
-      // L'endpoint /health exige une clé API valide, sinon Supabase renvoie
-      // 401 (bruyant dans la console) — cf. rapporté le 06/08. On n'a besoin
-      // que d'une vraie réponse serveur pour savoir qu'on est en ligne, peu
-      // importe son code, mais autant éviter le bruit d'erreur inutile.
-      headers: cle ? { apikey: cle } : undefined,
     });
     clearTimeout(timeoutId);
     return true;
@@ -73,7 +67,7 @@ export function useSyncStatus() {
 
         const { data: venteCreee, error: erreurVente } = await supabase
           .from("ventes")
-          .insert({ client_id: vente.client_id, utilisateur_id: user?.id ?? null })
+          .insert({ client_id: vente.client_id, nom_client_comptant: vente.nom_client_comptant, utilisateur_id: user?.id ?? null })
           .select()
           .single();
         if (erreurVente || !venteCreee) return { ok: false, erreur: erreurVente?.message };

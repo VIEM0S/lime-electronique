@@ -48,6 +48,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
   const [recherche, setRecherche] = useState("");
   const [lignes, setLignes] = useState<Ligne[]>([]);
   const [clientId, setClientId] = useState<string>("");
+  const [nomClientComptant, setNomClientComptant] = useState<string>("");
   const [montants, setMontants] = useState<Record<ModePaiement, number>>({
     especes: 0,
     mobile_money: 0,
@@ -99,6 +100,8 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
   function reinitialiser() {
     setLignes([]);
     setMontants({ especes: 0, mobile_money: 0, virement: 0, credit: 0 });
+    setClientId("");
+    setNomClientComptant("");
   }
 
   async function validerVente() {
@@ -134,6 +137,8 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
     setEnvoi(true);
 
+    const nomAffiche = clients.find((c) => c.id === clientId)?.nom ?? (nomClientComptant.trim() || null);
+
     const paiementsAEnvoyer = MODES.filter((m) => montants[m.key] > 0).map((m) => ({
       mode: m.key,
       montant: montants[m.key],
@@ -142,6 +147,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
     async function basculerHorsLigne() {
       const action = await mettreEnFileVente({
         client_id: clientId || null,
+        nom_client_comptant: clientId ? null : nomClientComptant.trim() || null,
         lignes: lignes.map((l) => ({
           article_id: l.article.id,
           quantite: l.quantite,
@@ -154,7 +160,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       setRecu({
         lignes,
         total,
-        clientNom: clients.find((c) => c.id === clientId)?.nom ?? null,
+        clientNom: nomAffiche,
         paiements: paiementsAEnvoyer,
       });
       reinitialiser();
@@ -175,7 +181,11 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
       const { data: vente, error: erreurVente } = await supabase
         .from("ventes")
-        .insert({ client_id: clientId || null, utilisateur_id: user?.id ?? null })
+        .insert({
+          client_id: clientId || null,
+          nom_client_comptant: clientId ? null : nomClientComptant.trim() || null,
+          utilisateur_id: user?.id ?? null,
+        })
         .select()
         .single();
 
@@ -219,7 +229,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
 
       setEnvoi(false);
       setResultat({ ...(venteFinale ?? { numero_facture: vente.numero_facture, statut: "impayee" }), horsLigne: false });
-      setRecu({ lignes, total, clientNom: clients.find((c) => c.id === clientId)?.nom ?? null, paiements: paiementsAEnvoyer });
+      setRecu({ lignes, total, clientNom: nomAffiche, paiements: paiementsAEnvoyer });
       reinitialiser();
     } catch (err) {
       setEnvoi(false);
@@ -349,6 +359,23 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
               <option key={c.id} value={c.id}>{c.nom} — {c.telephone}</option>
             ))}
           </select>
+
+          {!clientId && montants.credit === 0 && (
+            <div className="mt-2">
+              <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
+                Nom du client (optionnel, juste pour la facture)
+              </label>
+              <input
+                value={nomClientComptant}
+                onChange={(e) => setNomClientComptant(e.target.value)}
+                placeholder="Ex : Aminata Koné"
+                className="w-full border border-ink/15 rounded-md px-2 py-1.5 text-xs"
+              />
+              <p className="text-[10px] text-ink/45 mt-1">
+                Juste pour la facture — ne crée pas de fiche client, pas de suivi de créance.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3 space-y-2">
