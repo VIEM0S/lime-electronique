@@ -20,17 +20,23 @@ const INTERVALLE_RETRY_MS = 20_000;
 // `navigator.onLine` dit seulement "une interface réseau existe" (WiFi
 // connecté), pas "le serveur est vraiment joignable" — au Mali une connexion
 // instable peut rester "en ligne" pour le téléphone tout en ne menant nulle
-// part. On vérifie donc activement en tentant de joindre Supabase, avec un
+// part. On vérifie donc activement en tentant une requête réseau, avec un
 // délai court pour ne jamais bloquer l'interface.
+//
+// NB : on ping notre propre domaine (favicon.ico) plutôt que Supabase
+// directement. Un fetch brut vers l'API Supabase (ex: /auth/v1/health)
+// sans header `apikey` renvoie un 401 — inoffensif ici puisqu'on ne teste
+// que la réussite du fetch, pas le status code, mais ça polluait inutilement
+// la console et l'onglet Réseau, et faisait dépendre la détection réseau
+// d'un service tiers qu'on n'a pas besoin d'interroger juste pour savoir si
+// le téléphone a une connexion qui aboutit.
 async function verifierConnexionReelle(): Promise<boolean> {
   if (typeof navigator !== "undefined" && !navigator.onLine) return false;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return navigator.onLine;
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
-    await fetch(`${url}/auth/v1/health`, {
-      method: "GET",
+    await fetch("/favicon.ico", {
+      method: "HEAD",
       signal: controller.signal,
       cache: "no-store",
     });
