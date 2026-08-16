@@ -7,13 +7,14 @@
 // d'affichage provisoire "FACT-EN ATTENTE-xxxx" (jamais un numéro définitif
 // — cf. FR-27bis / SSD UC-10, seul le serveur attribue le numéro final).
 //
-// Au retour réseau, flushQueue() rejoue les ventes dans l'ordre de création.
+// Au retour réseau, flushQueue() rejoue les ventes dans l'ordre de création,
+// via la RPC serveur `synchroniser_vente_hors_ligne` (voir useSyncStatus.ts
+// et supabase/fixes/009_rpc_synchronisation_hors_ligne.sql) qui positionne
+// `app.sync_mode = 'true'` pour toute la transaction : un stock devenu
+// insuffisant entre-temps marque la vente `conflit_sync = true` (BR-08) au
+// lieu de faire échouer toute la synchronisation.
+//
 // Ce qui N'EST PAS encore couvert (à faire en phase suivante) :
-//   - Résolution de conflit de stock (SSD UC-08bis) : si le stock serveur est
-//     devenu insuffisant entre-temps, l'insert échoue et la vente reste dans
-//     la file en erreur plutôt que d'être marquée "en conflit" en base —
-//     il faut la RPC dédiée `synchroniser_ventes_en_attente` mentionnée dans
-//     schema.sql pour aller plus loin.
 //   - Paiements/remboursements/approvisionnements hors-ligne (le type
 //     PendingAction les prévoit, mais seul le flux "vente" est câblé ici).
 

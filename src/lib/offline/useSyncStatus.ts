@@ -67,35 +67,19 @@ export function useSyncStatus() {
 
     try {
       await flushQueue(async (vente: VenteOffline) => {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        const { data: venteCreee, error: erreurVente } = await supabase
-          .from("ventes")
-          .insert({ client_id: vente.client_id, nom_client_comptant: vente.nom_client_comptant, utilisateur_id: user?.id ?? null })
-          .select()
-          .single();
-        if (erreurVente || !venteCreee) return { ok: false, erreur: erreurVente?.message };
-
-        for (const l of vente.lignes) {
-          const { error } = await supabase.from("ventes_lignes").insert({
-            vente_id: venteCreee.id,
-            article_id: l.article_id,
-            quantite: l.quantite,
-            prix_unitaire: l.prix_unitaire,
-          });
-          if (error) return { ok: false, erreur: error.message };
-        }
-
-        for (const p of vente.paiements) {
-          if (p.montant > 0) {
-            const { error } = await supabase
-              .from("paiements")
-              .insert({ vente_id: venteCreee.id, mode: p.mode, montant: p.montant });
-            if (error) return { ok: false, erreur: error.message };
-          }
-        }
+        // RPC serveur dédiée (plutôt que les 3 inserts directs utilisés en
+        // ligne) : elle positionne `app.sync_mode = 'true'` pour toute la
+        // transaction, ce qui permet à fn_ventes_lignes_stock de marquer la
+        // vente `conflit_sync = true` (BR-08) si le stock est devenu
+        // insuffisant entre-temps, au lieu de faire échouer toute la
+        // synchronisation et de bloquer la vente indéfiniment dans la file.
+        const { error } = await supabase.rpc("synchroniser_vente_hors_ligne", {
+          p_client_id: vente.client_id,
+          p_nom_client_comptant: vente.nom_client_comptant,
+          p_lignes: vente.lignes,
+          p_paiements: vente.paiements,
+        });
+        if (error) return { ok: false, erreur: error.message };
 
         return { ok: true };
       });

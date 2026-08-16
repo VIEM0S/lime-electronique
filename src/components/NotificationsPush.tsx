@@ -95,7 +95,7 @@ export default function NotificationsPush() {
   if (etat === "indisponible") return null;
 
   return (
-    <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
+    <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {etat === "actif" ? (

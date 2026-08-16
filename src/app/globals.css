@@ -28,6 +28,26 @@ h1, h2, h3, .font-display {
   }
 }
 
+/* Indique visuellement qu'un conteneur défile horizontalement (tableaux qui
+   débordent sur mobile) sans JS ni écouteur de scroll — technique classique à
+   4 dégradés superposés (recette Lea Verou, "pure CSS scrolling shadows").
+   Les deux ombres (rgba teinté bleu de marque) sont peintes aux bords de
+   l'ÉLÉMENT (background-attachment: scroll, toujours là), et deux caches
+   blancs "collés" au tout début / à la toute fin du CONTENU
+   (background-attachment: local, qui défile avec lui) les masquent tant
+   qu'il n'y a rien à voir de ce côté-là. Suppose un fond blanc (bg-white) —
+   c'est déjà systématiquement le cas des conteneurs de tableaux ici. */
+.table-scroll-fade {
+  background-image: linear-gradient(to right, white 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to left, white 30%, rgba(255, 255, 255, 0)) 100% 0,
+    linear-gradient(to right, rgba(8, 48, 120, 0.16), rgba(8, 48, 120, 0)),
+    linear-gradient(to left, rgba(8, 48, 120, 0.16), rgba(8, 48, 120, 0)) 100% 0;
+  background-repeat: no-repeat;
+  background-color: white;
+  background-size: 24px 100%, 24px 100%, 10px 100%, 10px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
 /* Respect du focus clavier partout, y compris sur les cartes/boutons custom */
 :focus-visible {
   outline: 2px solid theme("colors.lime.deep");

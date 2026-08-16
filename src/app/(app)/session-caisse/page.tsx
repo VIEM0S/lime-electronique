@@ -102,13 +102,13 @@ export default async function SessionCaissePage() {
       <SessionCaisseForm sessionOuverte={sessionOuverte ?? null} repartitionParMode={repartitionParMode} />
 
       {profil?.role === "proprietaire" && fiabiliteParCaissier.some((c) => c.nbEcartsNegatifs > 0) && (
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
           <h2 className="text-sm font-display font-semibold mb-1">Fiabilité par caissier</h2>
           <p className="text-xs text-ink/55 italic mb-2">
             Un écart isolé arrive à tout le monde. Une répétition pour la même personne mérite une
             vraie conversation — croise avec l&apos;historique Mobile Money avant de conclure quoi que ce soit.
           </p>
-          <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+          <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
             <table className="w-full text-xs">
               <thead className="text-ink/55 text-left">
                 <tr>
@@ -144,7 +144,7 @@ export default async function SessionCaissePage() {
           <h2 className="text-sm font-display font-semibold mb-2 text-signal">
             ⚠ Écart(s) de caisse négatif(s) récent(s) — manque en caisse
           </h2>
-          <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+          <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
             <table className="w-full text-xs">
               <thead className="text-signal/60 text-left">
                 <tr><th className="py-1">Fermeture</th><th>Théorique</th><th>Compté</th><th>Écart</th><th>Commentaire</th></tr>
@@ -165,9 +165,9 @@ export default async function SessionCaissePage() {
         </div>
       )}
 
-      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
         <h2 className="text-sm font-display font-semibold mb-2">Historique des écarts</h2>
-        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+        <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
           <table className="w-full text-xs">
             <thead className="text-ink/55 text-left">
               <tr><th className="py-1">Ouverture</th><th>Fermeture</th><th>Fonds initial</th><th>Théorique</th><th>Compté</th><th>Écart</th><th>Commentaire</th></tr>

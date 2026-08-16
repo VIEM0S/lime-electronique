@@ -95,8 +95,8 @@ export default function CatalogueClient({
         </label>
       </div>
 
-      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
-        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-card overflow-hidden">
+        <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
 <table className="w-full text-xs">
           <thead className="bg-argent/10 text-ink/55 text-left">
             <tr>
@@ -162,10 +162,10 @@ export default function CatalogueClient({
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </div>
 
-      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
         <h2 className="text-sm font-display font-semibold mb-1">Mouvements de stock récents</h2>
         <p className="text-xs text-ink/55 italic mb-2">Historique des entrées/sorties</p>
-        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+        <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
 <table className="w-full text-xs">
           <thead className="text-ink/55 text-left">
             <tr><th className="py-1">Date</th><th>Article</th><th>Type</th><th>Qté</th><th>Motif</th></tr>

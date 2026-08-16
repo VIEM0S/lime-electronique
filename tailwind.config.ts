@@ -34,6 +34,15 @@ const config: Config = {
         sans: ["var(--font-body)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
+      boxShadow: {
+        // Ombres teintées avec le bleu de marque (rgb(8,48,120) = lime-deep)
+        // plutôt que du gris neutre — signature visuelle du produit. Centralisées
+        // ici pour ne jamais avoir à recopier la valeur rgba en dur ailleurs.
+        card: "0 1px 2px rgba(8,48,120,0.05)",
+        "card-hover": "0 1px 2px rgba(8,48,120,0.06)",
+        "card-hover-lg": "0 4px 12px rgba(8,48,120,0.08)",
+        elevated: "0 4px 16px rgba(8,48,120,0.18)",
+      },
       keyframes: {
         "fade-up": {
           "0%": { opacity: "0", transform: "translateY(4px)" },

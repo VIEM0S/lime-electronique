@@ -280,7 +280,7 @@ export default function ArticleModal({
       <style jsx global>{`
         .input {
           width: 100%;
-          border: 1px solid rgba(22, 33, 31, 0.15);
+          border: 1px solid rgba(38, 38, 38, 0.15);
           border-radius: 6px;
           padding: 0.5rem 0.75rem;
           font-size: 0.8125rem;
@@ -288,8 +288,8 @@ export default function ArticleModal({
         }
         .input:focus {
           outline: none;
-          border-color: #8fa916;
-          box-shadow: 0 0 0 1px #8fa916;
+          border-color: #083078;
+          box-shadow: 0 0 0 1px #083078;
         }
       `}</style>
     </Modal>

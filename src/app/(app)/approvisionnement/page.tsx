@@ -24,9 +24,9 @@ export default async function ApprovisionnementPage() {
 
       <ArrivageForm articles={articles ?? []} />
 
-      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
         <h2 className="text-sm font-display font-semibold mb-2">Arrivages précédents</h2>
-        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+        <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
 <table className="w-full text-xs">
           <thead className="text-ink/55 text-left">
             <tr><th className="py-1">Date</th><th>Nombre de références</th></tr>

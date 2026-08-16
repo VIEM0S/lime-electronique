@@ -61,7 +61,7 @@ export default function StyleGuidePage() {
       <section className="space-y-3">
         <h2 className="text-sm font-display font-semibold text-ink">3. Cartes KPI (Tableau de bord)</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white border border-argent/25 border-l-[3px] border-l-lime rounded-lg p-4 shadow-[0_1px_2px_rgba(8,48,120,0.06)]">
+          <div className="bg-white border border-argent/25 border-l-[3px] border-l-lime rounded-lg p-4 shadow-card-hover">
             <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2.5 bg-lime/10 text-lime-deep">
               <Wallet size={16} />
             </div>
@@ -69,7 +69,7 @@ export default function StyleGuidePage() {
             <div className="text-lg font-display font-semibold num">555 000 FCFA</div>
             <div className="text-xs text-ink/55">3 vente(s)</div>
           </div>
-          <div className="bg-white border border-argent/25 border-l-[3px] border-l-ember rounded-lg p-4 shadow-[0_1px_2px_rgba(8,48,120,0.06)]">
+          <div className="bg-white border border-argent/25 border-l-[3px] border-l-ember rounded-lg p-4 shadow-card-hover">
             <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2.5 bg-ember/10 text-ember">
               <AlertTriangle size={16} />
             </div>
@@ -77,7 +77,7 @@ export default function StyleGuidePage() {
             <div className="text-lg font-display font-semibold num">150 000 FCFA</div>
             <div className="text-xs text-ink/55">1 client(s)</div>
           </div>
-          <div className="bg-white border border-argent/25 border-l-[3px] border-l-argent rounded-lg p-4 shadow-[0_1px_2px_rgba(8,48,120,0.06)]">
+          <div className="bg-white border border-argent/25 border-l-[3px] border-l-argent rounded-lg p-4 shadow-card-hover">
             <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2.5 bg-argent/10 text-argent-deep">
               <PackageX size={16} />
             </div>

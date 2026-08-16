@@ -315,14 +315,14 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           )}
         </div>
 
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card overflow-hidden">
           {lignes.length === 0 ? (
             <div className="p-8 text-center text-ink/45 text-xs italic flex flex-col items-center gap-2">
               <ShoppingBag size={22} className="text-ink/15" />
               Le panier est vide — recherchez un article ci-dessus
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+            <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
               <table className="w-full text-xs">
                 <thead className="bg-argent/10 text-ink/55 text-left">
                   <tr><th className="p-2.5">Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>
@@ -352,7 +352,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       </div>
 
       <div className="space-y-3">
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card p-3">
           <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
             Client (optionnel — requis si crédit)
           </label>
@@ -385,7 +385,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           )}
         </div>
 
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3 space-y-2">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card p-3 space-y-2">
           <label className="block text-[10px] uppercase tracking-wide text-ink/55 font-semibold">Mode(s) de paiement</label>
           {MODES.map((m) => (
             <div key={m.key} className="flex items-center justify-between text-xs">

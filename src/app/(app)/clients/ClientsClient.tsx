@@ -41,8 +41,8 @@ export default function ClientsClient({ clients }: { clients: Client[] }) {
         className="w-full max-w-sm border border-ink/15 rounded-md px-3 py-2 text-sm focus:border-lime-deep focus:ring-1 focus:ring-lime-deep"
       />
 
-      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-card overflow-hidden">
+        <div className="overflow-x-auto table-scroll-fade">
           <table className="w-full text-xs">
             <thead className="bg-argent/10 text-ink/55 text-left">
               <tr>
