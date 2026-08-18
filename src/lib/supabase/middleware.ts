@@ -32,10 +32,22 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
+  // Un cookie de session corrompu ou un refresh token invalide/expiré (ex.
+  // "Invalid Refresh Token: Refresh Token Not Found") peut faire échouer cet
+  // appel au lieu de renvoyer simplement une session vide — sans ce
+  // try/catch, ça fait planter TOUTE la fonction edge sur cette requête
+  // (incident du 18/08/2026 : "This edge function has crashed" chez le
+  // client). Le pire résultat acceptable ici est de traiter la personne
+  // comme non connectée, jamais un crash de toute la fonction.
+  let user = null;
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    user = session?.user ?? null;
+  } catch {
+    user = null;
+  }
 
   const { pathname } = request.nextUrl;
   // Pages accessibles sans être connecté. Important : /reinitialiser-mot-de-passe

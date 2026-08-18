@@ -21,9 +21,18 @@ import type { Profil } from "@/types/database.types";
 export const getProfilCourant = cache(async (): Promise<Profil | null> => {
   const supabase = await createClient();
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // Même précaution que dans middleware.ts : un refresh token invalide/
+  // expiré peut faire échouer cet appel au lieu de renvoyer une session
+  // vide, ce qui ferait planter le rendu de la page entière plutôt que de
+  // simplement traiter la personne comme non connectée.
+  let session;
+  try {
+    ({
+      data: { session },
+    } = await supabase.auth.getSession());
+  } catch {
+    return null;
+  }
 
   if (!session?.user) return null;
 
