@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, Download, Search, Printer, Share2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -31,12 +32,17 @@ type DetailVente = {
   paiements: { mode: ModePaiement; montant: number }[];
 };
 
-export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
+export default function FacturesClient({ lignes, peutAnnuler = false }: { lignes: Ligne[]; peutAnnuler?: boolean }) {
   const supabase = createClient();
+  const router = useRouter();
   const [recherche, setRecherche] = useState("");
   const [ligneOuverte, setLigneOuverte] = useState<Ligne | null>(null);
   const [detailVente, setDetailVente] = useState<DetailVente | null>(null);
   const [chargement, setChargement] = useState(false);
+  const [annulationOuverte, setAnnulationOuverte] = useState(false);
+  const [motifAnnulation, setMotifAnnulation] = useState("");
+  const [envoiAnnulation, setEnvoiAnnulation] = useState(false);
+  const [erreurAnnulation, setErreurAnnulation] = useState<string | null>(null);
 
   const filtrees = useMemo(() => {
     const q = recherche.trim().toLowerCase();
@@ -82,6 +88,44 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
   function fermer() {
     setLigneOuverte(null);
     setDetailVente(null);
+    setAnnulationOuverte(false);
+    setMotifAnnulation("");
+    setErreurAnnulation(null);
+  }
+
+  // Même logique que VentesRecentes.tsx (écran Caisse), mais accessible ici
+  // quelle que soit l'ancienneté de la vente — l'écran Caisse ne montre que
+  // les ventes du jour, donc un client qui revient plusieurs jours après
+  // (produit défectueux, etc.) n'avait jusqu'ici aucun moyen d'annuler sa
+  // vente depuis l'app. La policy RLS "proprietaire_annule_ventes" n'a
+  // elle-même aucune restriction de date — ce n'était qu'un oubli d'interface.
+  async function confirmerAnnulation() {
+    if (!ligneOuverte) return;
+    if (!motifAnnulation.trim()) {
+      setErreurAnnulation("Le motif d'annulation est obligatoire.");
+      return;
+    }
+    setErreurAnnulation(null);
+    setEnvoiAnnulation(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { error } = await supabase
+      .from("ventes")
+      .update({ statut: "annulee", motif_annulation: motifAnnulation, annule_par: user?.id })
+      .eq("id", ligneOuverte.id);
+
+    setEnvoiAnnulation(false);
+
+    if (error) {
+      setErreurAnnulation(error.message);
+      return;
+    }
+
+    fermer();
+    router.refresh();
   }
 
   return (
@@ -160,14 +204,64 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
           chargement || !detailVente ? (
             <p className="text-xs text-ink/55 italic py-6 text-center">Chargement...</p>
           ) : (
-            <FactureApercu
-              numero={detailVente.numero}
-              statut={detailVente.statut}
-              clientNom={detailVente.clientNom}
-              lignes={detailVente.lignes}
-              total={detailVente.total}
-              paiements={detailVente.paiements}
-            />
+            <div className="space-y-3">
+              <FactureApercu
+                numero={detailVente.numero}
+                statut={detailVente.statut}
+                clientNom={detailVente.clientNom}
+                lignes={detailVente.lignes}
+                total={detailVente.total}
+                paiements={detailVente.paiements}
+              />
+
+              {peutAnnuler && detailVente.statut !== "annulee" && (
+                <div className="border-t border-ink/10 pt-3">
+                  {annulationOuverte ? (
+                    <div className="space-y-2">
+                      <label className="block text-[10px] uppercase tracking-wide text-ink/55 font-semibold">
+                        Motif d&apos;annulation (obligatoire)
+                      </label>
+                      <input
+                        value={motifAnnulation}
+                        onChange={(e) => setMotifAnnulation(e.target.value)}
+                        placeholder="Ex : produit défectueux rapporté par le client"
+                        className="w-full border border-ink/15 rounded-md px-2 py-1.5 text-xs"
+                        autoFocus
+                      />
+                      {erreurAnnulation && <p className="text-[11px] text-signal">{erreurAnnulation}</p>}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={confirmerAnnulation}
+                          disabled={envoiAnnulation}
+                          className="flex-1"
+                        >
+                          {envoiAnnulation ? "Annulation..." : "Confirmer l'annulation"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setAnnulationOuverte(false);
+                            setErreurAnnulation(null);
+                          }}
+                        >
+                          Retour
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setAnnulationOuverte(true)}
+                      className="text-[11px] text-signal hover:underline"
+                    >
+                      Annuler cette vente (produit rendu, erreur de saisie...)
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           )
         ) : (
           ligneOuverte && <ApercuRemboursement ligne={ligneOuverte} />

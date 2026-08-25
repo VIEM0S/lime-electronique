@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { getProfilCourant } from "@/lib/supabase/current-user";
 import FacturesClient from "./FacturesClient";
 
 export default async function FacturesPage() {
   const supabase = await createClient();
+  const profil = await getProfilCourant();
 
   const [{ data: ventes }, { data: remboursements }] = await Promise.all([
     supabase
@@ -67,5 +69,5 @@ export default async function FacturesPage() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  return <FacturesClient lignes={toutes} />;
+  return <FacturesClient lignes={toutes} peutAnnuler={profil?.role === "proprietaire"} />;
 }
