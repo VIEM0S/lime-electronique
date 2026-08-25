@@ -180,97 +180,54 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       return;
     }
 
-    let venteId: string | null = null;
+    // Vente + lignes + paiements créés en une seule transaction serveur
+    // (RPC `creer_vente`, cf. supabase/fixes/010_rpc_creation_vente_atomique.sql)
+    // plutôt qu'en 3 requêtes séparées orchestrées ici : soit tout est créé,
+    // soit rien ne l'est (rollback automatique Postgres en cas d'échec, ex.
+    // stock insuffisant) — impossible d'obtenir une vente à moitié créée
+    // même si l'app meurt en cours de route (incident du 25/08/2026 : des
+    // ventes fantômes à 0 FCFA, créées puis jamais complétées, restaient
+    // bloquées "impayee" indéfiniment).
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const { data: vente, error: erreurVente } = await supabase
-        .from("ventes")
-        .insert({
-          client_id: clientId || null,
-          nom_client_comptant: clientId ? null : nomClientComptant.trim() || null,
-          utilisateur_id: user?.id ?? null,
-        })
-        .select()
-        .single();
-
-      if (erreurVente || !vente) {
-        // Rien n'a encore été créé : si c'est une vraie panne réseau (et pas
-        // un refus métier du serveur), on peut basculer sans rien perdre.
-        if (erreurVente && estErreurReseau(erreurVente)) {
-          await basculerHorsLigne();
-          return;
-        }
-        setEnvoi(false);
-        setErreur(erreurVente?.message ?? "Erreur lors de la création de la vente.");
-        return;
-      }
-      venteId = vente.id;
-
-      for (const l of lignes) {
-        const { error: erreurLigne } = await inserer(() =>
-          supabase.from("ventes_lignes").insert({
-            vente_id: venteId,
+      const { data, error } = await inserer(() =>
+        supabase.rpc("creer_vente", {
+          p_client_id: clientId || null,
+          p_nom_client_comptant: clientId ? null : nomClientComptant.trim() || null,
+          p_lignes: lignes.map((l) => ({
             article_id: l.article.id,
             quantite: l.quantite,
             prix_unitaire: l.article.prix_vente,
-          })
-        );
-        if (erreurLigne) throw new Error(erreurLigne.message, { cause: erreurLigne });
-      }
+          })),
+          p_paiements: paiementsAEnvoyer,
+        })
+      );
+      if (error) throw new Error(error.message, { cause: error });
 
-      for (const p of paiementsAEnvoyer) {
-        const { error: erreurPaiement } = await inserer(() =>
-          supabase.from("paiements").insert({ vente_id: venteId, mode: p.mode, montant: p.montant })
-        );
-        if (erreurPaiement) throw new Error(erreurPaiement.message, { cause: erreurPaiement });
-      }
-
-      const { data: venteFinale } = await supabase
-        .from("ventes")
-        .select("numero_facture, statut")
-        .eq("id", venteId)
-        .single();
+      const venteCreee = Array.isArray(data) ? data[0] : data;
 
       setEnvoi(false);
-      setResultat({ ...(venteFinale ?? { numero_facture: vente.numero_facture, statut: "impayee" }), horsLigne: false });
+      setResultat({ ...venteCreee, horsLigne: false });
       setRecu({ lignes, total, clientNom: nomAffiche, clientTelephone: telephoneAffiche, clientQuartier: quartierAffiche, paiements: paiementsAEnvoyer });
       reinitialiser();
     } catch (err) {
       setEnvoi(false);
-      if (venteId && estErreurReseau(err)) {
-        // La vente existe déjà côté serveur (son numéro de facture est réel) —
-        // on ne la remet PAS en file d'attente hors-ligne pour éviter de la
-        // dupliquer à la prochaine synchronisation. On informe clairement.
-        setErreur(
-          `Panne réseau après création partielle de la vente (déjà enregistrée côté serveur). ` +
-            `Vérifie "Ventes récentes" avant de ressaisir — ne recommence pas à zéro sans vérifier.`
-        );
-      } else if (venteId) {
-        // Refus métier (ex: limite de crédit dépassée), pas une panne réseau.
-        // Des lignes ont pu être insérées avant l'échec (stock déjà
-        // décrémenté) — on annule proprement plutôt que de supprimer à cru,
-        // pour que le stock (et un éventuel crédit déjà enregistré) soit
-        // correctement restauré par fn_annuler_vente().
-        const {
-          data: { user: utilisateurCourant },
-        } = await supabase.auth.getUser();
-        await supabase
-          .from("ventes")
-          .update({ statut: "annulee", motif_annulation: "Refusée automatiquement (échec de validation)", annule_par: utilisateurCourant?.id ?? null })
-          .eq("id", venteId);
-        setErreur(err instanceof Error ? err.message : "Vente refusée.");
-      } else if (estErreurReseau(err)) {
+      if (estErreurReseau(err)) {
+        // La requête n'a jamais atteint le serveur (échec réseau réel, cf.
+        // estErreurReseau) : rien n'a pu être créé côté base, on peut
+        // basculer en file d'attente hors-ligne sans risque de doublon.
         await basculerHorsLigne();
       } else {
-        setErreur(err instanceof Error ? err.message : "Erreur inattendue lors de la vente.");
+        // Refus métier (stock insuffisant, limite de crédit, etc.) : grâce à
+        // la transaction unique, rien n'a été créé — pas de rattrapage à
+        // faire, juste informer.
+        setErreur(err instanceof Error ? err.message : "Vente refusée.");
       }
     }
 
-    // Retente une insertion 2 fois de plus avant d'abandonner (une coupure
-    // réseau très brève ne doit pas faire échouer toute la vente).
+    // Retente 2 fois de plus avant d'abandonner (une coupure réseau très
+    // brève ne doit pas faire échouer toute la vente) — sûr ici car
+    // estErreurReseau ne couvre que les cas où la requête n'a jamais atteint
+    // le serveur, jamais une réponse d'erreur métier déjà reçue.
     async function inserer<T>(fn: () => PromiseLike<T>): Promise<T> {
       let derniereErreur: any;
       for (let tentative = 0; tentative < 3; tentative++) {
