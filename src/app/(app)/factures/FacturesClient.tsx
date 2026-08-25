@@ -19,6 +19,7 @@ type Ligne = {
   clientNom: string;
   paiement: string;
   total: number;
+  statut: string;
 };
 
 type DetailVente = {
@@ -62,7 +63,11 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
     setChargement(false);
     setDetailVente({
       numero: ligne.reference,
-      statut: "", // recalculé côté FactureApercu à partir des paiements réels
+      // Statut réel de la base (ventes.statut), pas recalculé côté client —
+      // l'ancienne logique de recalcul affichait "Payé" par erreur dès que
+      // la vente n'avait aucun paiement enregistré du tout (tableau vide),
+      // au lieu de "Impayé".
+      statut: ligne.statut,
       clientNom: ligne.clientNom === "Client comptoir" ? null : ligne.clientNom,
       lignes: (venteLignes ?? []).map((l: any) => ({
         nom: l.articles?.nom ?? "Article",
@@ -157,13 +162,7 @@ export default function FacturesClient({ lignes }: { lignes: Ligne[] }) {
           ) : (
             <FactureApercu
               numero={detailVente.numero}
-              statut={
-                detailVente.paiements.some((p) => p.mode === "credit" && p.montant > 0)
-                  ? detailVente.paiements.filter((p) => p.mode !== "credit").reduce((s, p) => s + p.montant, 0) > 0
-                    ? "partielle"
-                    : "impayee"
-                  : "payee"
-              }
+              statut={detailVente.statut}
               clientNom={detailVente.clientNom}
               lignes={detailVente.lignes}
               total={detailVente.total}

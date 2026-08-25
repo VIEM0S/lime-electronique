@@ -24,6 +24,7 @@ export default async function FacturesPage() {
     clientNom: string;
     paiement: string;
     total: number;
+    statut: string;
   };
 
   const LABEL_MODE: Record<string, string> = {
@@ -48,6 +49,7 @@ export default async function FacturesPage() {
     clientNom: v.clients?.nom ?? v.nom_client_comptant ?? "Client comptoir",
     paiement: libellePaiement((v.paiements ?? []).map((p: any) => p.mode)),
     total: Number(v.montant_total),
+    statut: v.statut,
   }));
 
   const lignesRemboursements: Ligne[] = (remboursements ?? []).map((r: any) => ({
@@ -58,6 +60,7 @@ export default async function FacturesPage() {
     clientNom: r.clients?.nom ?? "—",
     paiement: LABEL_MODE[r.mode] ?? r.mode,
     total: Number(r.montant),
+    statut: "payee", // non utilisé pour un reçu de remboursement (toujours un encaissement effectif)
   }));
 
   const toutes = [...lignesVentes, ...lignesRemboursements].sort(
