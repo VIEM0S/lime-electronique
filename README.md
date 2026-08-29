@@ -1,15 +1,21 @@
 # Lime-électronique — Système de gestion
 
-Scaffold Next.js (App Router) + Supabase, correspondant au SRS, SSD, maquette et
-schéma SQL déjà livrés. Instance indépendante — pas de couplage avec la
+Application de gestion pour un commerce d'électronique : caisse, stock,
+clients/créances, approvisionnement. Next.js (App Router) + Supabase
+(Postgres/Auth/RLS). **En production, utilisée par le client réel** depuis
+fin juillet 2026. Instance indépendante — pas de couplage avec la
 plateforme Kafora/ALPHA (architecture réutilisée, base de données propre).
 
 ## Mise en route
 
 ### 1. Créer le projet Supabase
 1. Créer un nouveau projet sur [supabase.com](https://supabase.com).
-2. Dans l'éditeur SQL du projet, exécuter le contenu de `supabase/schema.sql`
-   (tables, triggers, RLS, vues, données d'exemple).
+2. Dans l'éditeur SQL du projet, exécuter le contenu de `supabase/schema.sql`,
+   puis chaque fichier de `supabase/fixes/`, **dans l'ordre numéroté**
+   (001, 002, ... — chacun documente en tête de fichier ce qu'il corrige et
+   pourquoi). `schema.sql` seul ne reflète que l'état initial du projet ;
+   les fixes contiennent l'historique cumulé des correctifs appliqués en
+   production depuis.
 3. Créer les deux premiers comptes via **Authentication → Users → Add user**
    (email + mot de passe), un pour le propriétaire et un pour le vendeur/caisse.
 4. Pour chacun, récupérer son `id` (colonne `id` de la table `auth.users`) et
@@ -36,45 +42,54 @@ npm run dev
 ```
 Ouvrir http://localhost:3000/login et se connecter avec l'un des deux comptes créés.
 
-## Ce qui est déjà fonctionnel
+## Fonctionnalités
 
-- Authentification (Supabase Auth) + redirection selon session (`middleware.ts`)
-- Layout applicatif avec navigation qui s'adapte au rôle (`propriétaire` voit
-  tout, `caisse` ne voit que Caisse/Vente et Session de caisse)
+- **Authentification** (Supabase Auth) + redirection selon session
+  (`middleware.ts`), mot de passe oublié/réinitialisation par email.
+- **Layout applicatif** avec navigation qui s'adapte au rôle (`propriétaire`
+  voit tout, `caisse` ne voit que Caisse/Vente et Session de caisse).
 - **Tableau de bord** : KPIs réels (ventes du jour, créances, stock faible),
-  et alerte des ventes en conflit de synchronisation (BR-08)
-- **Catalogue** : liste des articles + historique des mouvements de stock (lecture)
-- **Clients & créances** : liste avec solde dû (lecture)
-- **Approvisionnement** : historique des arrivages (lecture)
-- **Utilisateurs** : liste avec rôle et statut (lecture)
-- **Caisse** : formulaire complet et fonctionnel — recherche d'article,
-  ajout de lignes, sélection du client, paiements multiples (espèces / Mobile
-  Money / virement / crédit), validation qui insère réellement la vente dans
-  Supabase et remonte les erreurs du serveur (ex. stock insuffisant, FR-08)
-- **Ventes récentes (écran Caisse)** : liste des dernières ventes avec badges
-  de statut (payée/partielle/impayée/**annulée**) et badge "en conflit"
-  (BR-08) ; le propriétaire peut **annuler une vente** avec motif obligatoire
-  (FR-30/UC-09) — la réincrémentation du stock est gérée par le trigger SQL
-- **Session de caisse** (nouveau, FR-31/32/UC-11) : ouverture avec fonds
-  initial déclaré, fermeture avec calcul automatique du montant théorique et
-  de l'écart, historique des sessions fermées
+  graphique des ventes sur 7 jours, alerte des ventes en conflit de
+  synchronisation (BR-08).
+- **Catalogue** : CRUD articles, historique des mouvements de stock,
+  correction de stock tracée (motif + mouvement journalisé).
+- **Clients & créances** : CRUD clients, solde dû, limite de crédit,
+  enregistrement des remboursements.
+- **Approvisionnement** : saisie des arrivages avec recherche d'article,
+  historique, lecture du prix de revient.
+- **Utilisateurs** (propriétaire uniquement) : création/modification/
+  désactivation/réinitialisation de mot de passe — via Route Handlers
+  serveur (`src/app/api/utilisateurs/`) qui utilisent l'API Admin Supabase
+  (clé `service_role`, jamais exposée au navigateur).
+- **Caisse** : recherche d'article, paiements multiples (espèces / Mobile
+  Money / virement / crédit), client optionnel ou nom libre pour vente
+  comptant, validation qui insère réellement la vente dans Supabase et
+  remonte les erreurs serveur (ex. stock insuffisant, FR-08).
+- **Ventes récentes / Factures** : liste avec badges de statut
+  (payée/partielle/impayée/annulée) et badge "en conflit" (BR-08) ; le
+  propriétaire peut annuler une vente avec motif obligatoire (FR-30/UC-09,
+  réincrémente le stock via trigger) — depuis l'écran Caisse (ventes du
+  jour) **et** depuis Factures (tout l'historique, ajouté le 25/08/2026 :
+  un client qui revient plusieurs jours après avec un produit défectueux
+  n'avait auparavant aucun moyen d'annuler sa vente dans l'app). Facture/reçu
+  exportables en image (partage WhatsApp).
+- **Rapports & Analytics** : 3 onglets (Vue d'ensemble, Top produits classés
+  par chiffre d'affaires généré, Par mois sur 12 mois avec détail mensuel),
+  export CSV contextuel à l'onglet actif.
+- **Session de caisse** (FR-31/32/UC-11) : ouverture avec fonds initial
+  déclaré, fermeture avec calcul automatique du montant théorique et de
+  l'écart (espèces réellement encaissées pendant la session, ventes
+  annulées exclues), historique des sessions fermées, commentaire optionnel
+  à la fermeture, notifications push à l'ouverture/fermeture.
+- **Mode hors-ligne** (FR-25/26/27, SSD UC-08) : file d'attente locale
+  (IndexedDB) pour les ventes créées sans réseau, numéro de facture
+  provisoire (jamais généré côté client), rejeu automatique au retour
+  réseau via une RPC serveur dédiée qui gère aussi le conflit de stock
+  (UC-08bis, BR-08 — cf. `src/lib/offline/`).
+- **PWA** : manifest + service worker, gestes tactiles (retour/avance par
+  les bords, tirer pour actualiser), notifications push.
 
-## Ce qu'il reste à faire (TODO explicitement marqués dans le code)
-
-Cherchez `TODO` dans le code pour la liste précise. En résumé :
-
-| Zone | Fichier | Ce qui manque |
-|---|---|---|
-| Mode hors-ligne | `src/lib/offline/queue.ts` | File d'attente IndexedDB, détection connexion, rejeu au retour réseau (FR-25/26/27, SSD UC-08/UC-08bis/UC-10). Le rejeu doit passer par une Route Handler/RPC serveur qui positionne `set local app.sync_mode = 'true'` (cf. commentaire dans le fichier et `supabase/schema.sql`) |
-| Facture PDF | `src/app/(app)/caisse/CaisseForm.tsx` | Génération réelle du PDF (FR-14), ex. avec `@react-pdf/renderer` |
-| Création/édition d'articles | `src/app/(app)/catalogue/page.tsx` | Formulaire (FR-01/02) |
-| Formulaire d'arrivage | `src/app/(app)/approvisionnement/page.tsx` | Saisie réelle (FR-19/20), lecture de `vue_prix_revient` (FR-21) |
-| Paiement sur créance | `src/app/(app)/clients/page.tsx` | Formulaire d'enregistrement (FR-17) -> insert dans `remboursements_credit` |
-| Gestion des comptes | `src/app/(app)/utilisateurs/page.tsx` | Créer/modifier/désactiver/réinitialiser (FR-22 à FR-22quater) — nécessite l'API Admin de Supabase Auth (à appeler depuis une Route Handler serveur, jamais depuis le client) |
-| Graphique ventes 7 jours | `src/app/(app)/dashboard/page.tsx` | FR-29, ex. avec `recharts` |
-| PWA / Service Worker | `public/manifest.json` | Actuellement un manifest minimal ; ajouter un service worker (ex. `next-pwa`) pour le vrai fonctionnement hors-ligne |
-
-## Décisions techniques déjà actées (voir SRS/SSD pour le détail)
+## Décisions techniques actées (voir SRS/SSD pour le détail)
 
 - **FR-08** : blocage systématique (pas juste un avertissement), en ligne
   comme hors-ligne — implémenté côté base via le trigger
@@ -83,12 +98,59 @@ Cherchez `TODO` dans le code pour la liste précise. En résumé :
   client — uniquement par la séquence Postgres au moment de l'insertion
   réelle en base, ce qui élimine tout risque de collision multi-appareils.
 - **FR-30/BR-07** : annulation de vente réservée au propriétaire (policy RLS
-  `proprietaire_annule_ventes`), immuable ensuite, réincrémente le stock.
+  `proprietaire_annule_ventes`), immuable ensuite, réincrémente le stock et
+  corrige le solde crédit du client si applicable.
 - **FR-31/FR-32** : session de caisse — un seul index unique partiel empêche
   qu'un même utilisateur ait deux sessions ouvertes simultanément.
-- **BR-08/UC-08bis** : en mode synchronisation (`app.sync_mode = 'true'`), un
-  stock insuffisant marque la vente `conflit_sync = true` au lieu de bloquer
-  l'insertion — à ne jamais activer hors de ce contexte précis.
+- **BR-08/UC-08bis** : en mode synchronisation (`app.sync_mode = 'true'`,
+  positionné uniquement par la RPC `synchroniser_vente_hors_ligne`), un
+  stock insuffisant marque la vente `conflit_sync = true` au lieu de
+  bloquer l'insertion — à ne jamais activer hors de ce contexte précis.
 - **Mobile Money** : saisie déclarative uniquement, aucune intégration API prévue.
 - **BR-06** : le mode crédit est refusé côté base (et vérifié côté formulaire)
   si aucun client n'est sélectionné.
+- **Création de vente atomique** (`fix 010`, 25/08/2026) : la caisse en ligne
+  (`CaisseForm.tsx`) et la synchronisation hors-ligne (`useSyncStatus.ts`)
+  passent chacune par une RPC serveur (`creer_vente` /
+  `synchroniser_vente_hors_ligne`) qui crée la vente, ses lignes et ses
+  paiements dans **une seule transaction Postgres** — plus jamais de vente
+  "à moitié créée" si l'app meurt en cours de route (incident réel du
+  22/08/2026 : 87 factures fantômes à 0 FCFA causées par l'ancienne
+  orchestration en 3 requêtes séparées côté client).
+- **Middleware résilient** (18/08/2026) : `supabase.auth.getSession()` est
+  protégé par un `try/catch` dans `middleware.ts` et `current-user.ts` — un
+  refresh token invalide/expiré ne doit jamais faire planter toute la
+  fonction edge (incident réel : site down chez le client suite à ça).
+
+## Sécurité
+
+Un audit pré-lancement a été mené le 30/07/2026
+(`supabase/fixes/006_audit_securite.sql`) et complété le 16/08/2026
+(`supabase/fixes/008_lockdown_fonctions_ajout_stock.sql`). Deux points
+restent à faire manuellement dans le Dashboard Supabase (pas de SQL
+possible) :
+- **Authentication → Policies/Password → activer "Leaked password
+  protection"**.
+- Déplacer l'extension `pg_net` hors du schéma `public` (cosmétique,
+  volontairement laissé tel quel pour ne pas risquer de casser le trigger
+  de notification de session de caisse qui l'utilise — voir le fix 006
+  pour le détail du compromis).
+
+## Tests
+
+`supabase/tests/` contient des tests pgTAP pour les triggers SQL critiques
+(stock, annulation de vente, écart de caisse) — voir
+`supabase/tests/README.md` pour les lancer. Pas de tests automatisés côté
+frontend pour l'instant.
+
+## Ce qu'il reste à faire
+
+- **Mode hors-ligne** : seul le flux "vente" est câblé (le type
+  `PendingAction` prévoit aussi paiements/remboursements/arrivages hors
+  ligne, mais ce n'est pas encore implémenté) — cf. commentaires dans
+  `src/lib/offline/queue.ts`.
+- **Annulation partielle** : annuler une vente annule toute la vente, pas un
+  article précis — pas de "retour partiel" pour une vente à plusieurs
+  articles dont un seul est défectueux (décision volontaire, pas un besoin
+  concret exprimé pour l'instant).
+- Pas de tests automatisés côté frontend (composants React).
