@@ -98,6 +98,9 @@ export interface VenteLigne {
   article_id: string;
   quantite: number;
   prix_unitaire: number;
+  // false uniquement pour une ligne en conflit de synchronisation (BR-08)
+  // dont le stock n'a jamais été décrémenté (fix 011).
+  stock_decremente: boolean;
 }
 
 export interface Paiement {
