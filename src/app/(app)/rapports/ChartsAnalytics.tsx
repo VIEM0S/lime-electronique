@@ -43,6 +43,23 @@ export function ActiviteSemaine({ data }: { data: { jour: string; ca: number }[]
   );
 }
 
+export function TopProduitsChart({ data }: { data: { nom: string; ca: number }[] }) {
+  if (data.length === 0) {
+    return <p className="text-xs text-ink/55 text-center py-10">Aucune vente enregistrée sur la période</p>;
+  }
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={data} margin={{ bottom: 24 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+        <XAxis dataKey="nom" fontSize={10} angle={-20} textAnchor="end" interval={0} />
+        <YAxis fontSize={11} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
+        <Tooltip formatter={(v) => `${Number(v ?? 0).toLocaleString("fr-FR")} FCFA`} />
+        <Bar dataKey="ca" fill="#0050B0" radius={[3, 3, 0, 0]} name="Chiffre d'affaires" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 export function RepartitionModes({ data }: { data: { mode: string; montant: number }[] }) {
   if (data.length === 0) {
     return <p className="text-xs text-ink/55 text-center py-10">Aucun paiement enregistré</p>;
