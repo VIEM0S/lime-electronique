@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfilCourant } from "@/lib/supabase/current-user";
 import { redirect } from "next/navigation";
-import { Wallet, AlertTriangle, PackageX, AlertOctagon, type LucideIcon } from "lucide-react";
+import { Wallet, AlertTriangle, PackageX, type LucideIcon } from "lucide-react";
 import VentesChart from "./VentesChart";
+import ConflitsSyncAlerte from "./ConflitsSyncAlerte";
 
 const SEUIL_STOCK_FAIBLE = 5; // FR-28
 
@@ -38,7 +39,7 @@ export default async function DashboardPage() {
         .eq("actif", true),
       supabase
         .from("ventes")
-        .select("numero_facture, date, montant_total")
+        .select("id, numero_facture, date, montant_total")
         .eq("conflit_sync", true),
       supabase
         .from("ventes")
@@ -140,32 +141,7 @@ export default async function DashboardPage() {
 
       <VentesChart data={jours} />
 
-      {ventesEnConflit && ventesEnConflit.length > 0 && (
-        <div className="bg-signal/5 border border-signal/20 rounded-lg p-4">
-          <h2 className="flex items-center gap-1.5 text-sm font-display font-semibold mb-2 text-signal">
-            <AlertOctagon size={15} />
-            {ventesEnConflit.length} vente(s) en conflit de synchronisation
-          </h2>
-          <p className="text-xs text-signal/80 mb-2">
-            Stock devenu insuffisant entre l&apos;enregistrement hors-ligne et la synchronisation —
-            arbitrage manuel requis (cf. Caisse → Ventes récentes).
-          </p>
-          <table className="w-full text-xs">
-            <thead className="text-signal/60 text-left">
-              <tr><th className="py-1">Facture</th><th>Date</th><th>Montant</th></tr>
-            </thead>
-            <tbody>
-              {ventesEnConflit.map((v) => (
-                <tr key={v.numero_facture} className="border-t border-signal/10">
-                  <td className="py-1">{v.numero_facture}</td>
-                  <td>{new Date(v.date).toLocaleString("fr-FR")}</td>
-                  <td className="num">{Number(v.montant_total).toLocaleString("fr-FR")} FCFA</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {ventesEnConflit && ventesEnConflit.length > 0 && <ConflitsSyncAlerte ventes={ventesEnConflit} />}
 
       {stockFaible && stockFaible.length > 0 && (
         <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
