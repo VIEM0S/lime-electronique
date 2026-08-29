@@ -88,7 +88,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <h1 className="text-lg font-display font-semibold text-ink">Tableau de bord</h1>
 
-      <div className="bg-lime rounded-lg p-5 shadow-[0_4px_16px_rgba(8,48,120,0.18)] text-white">
+      <div className="bg-lime rounded-lg p-5 shadow-elevated text-white">
         <div className="flex items-center gap-2 text-white/70 text-[11px] uppercase tracking-wide font-semibold">
           <Wallet size={14} />
           Ventes du jour
@@ -117,7 +117,7 @@ export default async function DashboardPage() {
       </div>
 
       {Object.keys(parMode).length > 0 && (
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
           <h2 className="text-sm font-display font-semibold mb-1">Encaissé aujourd&apos;hui</h2>
           <p className="text-xs text-ink/55 italic mb-2">Par mode de paiement — le crédit n&apos;est pas de l&apos;argent en caisse</p>
           <div className="text-lg font-display font-semibold num mb-2">
@@ -168,7 +168,7 @@ export default async function DashboardPage() {
       )}
 
       {stockFaible && stockFaible.length > 0 && (
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
           <h2 className="text-sm font-display font-semibold mb-2">Articles en stock faible</h2>
           <table className="w-full text-xs">
             <thead className="text-ink/55 text-left">
@@ -211,7 +211,7 @@ function Kpi({
 
   return (
     <div
-      className={`bg-white border border-argent/25 border-l-[3px] ${toneClasses.bordure} rounded-lg p-4 shadow-[0_1px_2px_rgba(8,48,120,0.06)] hover:shadow-[0_4px_12px_rgba(8,48,120,0.08)] hover:-translate-y-0.5 transition-all duration-150`}
+      className={`bg-white border border-argent/25 border-l-[3px] ${toneClasses.bordure} rounded-lg p-4 shadow-card-hover hover:shadow-card-hover-lg hover:-translate-y-0.5 transition-all duration-150`}
     >
       <div className={`w-8 h-8 rounded-md flex items-center justify-center mb-2.5 ${toneClasses.puce}`}>
         <Icon size={16} />

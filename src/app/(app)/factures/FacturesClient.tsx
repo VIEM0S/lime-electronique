@@ -145,8 +145,8 @@ export default function FacturesClient({ lignes, peutAnnuler = false }: { lignes
         />
       </div>
 
-      <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white border border-argent/25 rounded-lg shadow-card overflow-hidden">
+        <div className="overflow-x-auto table-scroll-fade">
           <table className="w-full text-xs">
             <thead className="bg-argent/10 text-ink/55 text-left">
               <tr>
@@ -286,7 +286,7 @@ function ApercuRemboursement({ ligne }: { ligne: Ligne }) {
 
   return (
     <div className="space-y-3">
-      <div ref={refRecu} id="zone-impression" className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-5 text-xs font-mono">
+      <div ref={refRecu} id="zone-impression" className="bg-white border border-argent/25 rounded-lg shadow-card p-5 text-xs font-mono">
         <div className="flex flex-col items-center mb-3">
           <Image src="/icons/icon-192.png" alt="Lime-électronique" width={48} height={48} className="rounded-md mb-1.5" />
           <div className="font-display font-bold text-sm text-lime-deep">Lime-électronique</div>

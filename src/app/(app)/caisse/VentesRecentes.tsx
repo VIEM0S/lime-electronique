@@ -57,11 +57,11 @@ export default function VentesRecentes({ ventes, peutAnnuler }: { ventes: VenteL
   }
 
   return (
-    <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-4">
+    <div className="bg-white border border-argent/25 rounded-lg shadow-card p-4">
       <h2 className="text-sm font-display font-semibold mb-2">
         Ventes d&apos;aujourd&apos;hui <span className="text-ink/55 font-normal">({ventes.length})</span>
       </h2>
-      <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+      <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
 <table className="w-full text-xs">
         <thead className="text-ink/55 text-left">
           <tr><th className="py-1">Facture</th><th>Date</th><th>Montant</th><th>Statut</th><th></th></tr>

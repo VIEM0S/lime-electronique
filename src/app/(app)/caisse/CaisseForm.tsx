@@ -180,54 +180,97 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       return;
     }
 
-    // Vente + lignes + paiements créés en une seule transaction serveur
-    // (RPC `creer_vente`, cf. supabase/fixes/010_rpc_creation_vente_atomique.sql)
-    // plutôt qu'en 3 requêtes séparées orchestrées ici : soit tout est créé,
-    // soit rien ne l'est (rollback automatique Postgres en cas d'échec, ex.
-    // stock insuffisant) — impossible d'obtenir une vente à moitié créée
-    // même si l'app meurt en cours de route (incident du 25/08/2026 : des
-    // ventes fantômes à 0 FCFA, créées puis jamais complétées, restaient
-    // bloquées "impayee" indéfiniment).
+    let venteId: string | null = null;
     try {
-      const { data, error } = await inserer(() =>
-        supabase.rpc("creer_vente", {
-          p_client_id: clientId || null,
-          p_nom_client_comptant: clientId ? null : nomClientComptant.trim() || null,
-          p_lignes: lignes.map((l) => ({
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const { data: vente, error: erreurVente } = await supabase
+        .from("ventes")
+        .insert({
+          client_id: clientId || null,
+          nom_client_comptant: clientId ? null : nomClientComptant.trim() || null,
+          utilisateur_id: user?.id ?? null,
+        })
+        .select()
+        .single();
+
+      if (erreurVente || !vente) {
+        // Rien n'a encore été créé : si c'est une vraie panne réseau (et pas
+        // un refus métier du serveur), on peut basculer sans rien perdre.
+        if (erreurVente && estErreurReseau(erreurVente)) {
+          await basculerHorsLigne();
+          return;
+        }
+        setEnvoi(false);
+        setErreur(erreurVente?.message ?? "Erreur lors de la création de la vente.");
+        return;
+      }
+      venteId = vente.id;
+
+      for (const l of lignes) {
+        const { error: erreurLigne } = await inserer(() =>
+          supabase.from("ventes_lignes").insert({
+            vente_id: venteId,
             article_id: l.article.id,
             quantite: l.quantite,
             prix_unitaire: l.article.prix_vente,
-          })),
-          p_paiements: paiementsAEnvoyer,
-        })
-      );
-      if (error) throw new Error(error.message, { cause: error });
+          })
+        );
+        if (erreurLigne) throw new Error(erreurLigne.message, { cause: erreurLigne });
+      }
 
-      const venteCreee = Array.isArray(data) ? data[0] : data;
+      for (const p of paiementsAEnvoyer) {
+        const { error: erreurPaiement } = await inserer(() =>
+          supabase.from("paiements").insert({ vente_id: venteId, mode: p.mode, montant: p.montant })
+        );
+        if (erreurPaiement) throw new Error(erreurPaiement.message, { cause: erreurPaiement });
+      }
+
+      const { data: venteFinale } = await supabase
+        .from("ventes")
+        .select("numero_facture, statut")
+        .eq("id", venteId)
+        .single();
 
       setEnvoi(false);
-      setResultat({ ...venteCreee, horsLigne: false });
+      setResultat({ ...(venteFinale ?? { numero_facture: vente.numero_facture, statut: "impayee" }), horsLigne: false });
       setRecu({ lignes, total, clientNom: nomAffiche, clientTelephone: telephoneAffiche, clientQuartier: quartierAffiche, paiements: paiementsAEnvoyer });
       reinitialiser();
     } catch (err) {
       setEnvoi(false);
-      if (estErreurReseau(err)) {
-        // La requête n'a jamais atteint le serveur (échec réseau réel, cf.
-        // estErreurReseau) : rien n'a pu être créé côté base, on peut
-        // basculer en file d'attente hors-ligne sans risque de doublon.
+      if (venteId && estErreurReseau(err)) {
+        // La vente existe déjà côté serveur (son numéro de facture est réel) —
+        // on ne la remet PAS en file d'attente hors-ligne pour éviter de la
+        // dupliquer à la prochaine synchronisation. On informe clairement.
+        setErreur(
+          `Panne réseau après création partielle de la vente (déjà enregistrée côté serveur). ` +
+            `Vérifie "Ventes récentes" avant de ressaisir — ne recommence pas à zéro sans vérifier.`
+        );
+      } else if (venteId) {
+        // Refus métier (ex: limite de crédit dépassée), pas une panne réseau.
+        // Des lignes ont pu être insérées avant l'échec (stock déjà
+        // décrémenté) — on annule proprement plutôt que de supprimer à cru,
+        // pour que le stock (et un éventuel crédit déjà enregistré) soit
+        // correctement restauré par fn_annuler_vente().
+        const {
+          data: { user: utilisateurCourant },
+        } = await supabase.auth.getUser();
+        await supabase
+          .from("ventes")
+          .update({ statut: "annulee", motif_annulation: "Refusée automatiquement (échec de validation)", annule_par: utilisateurCourant?.id ?? null })
+          .eq("id", venteId);
+        setErreur(err instanceof Error ? err.message : "Vente refusée.");
+      } else if (estErreurReseau(err)) {
         await basculerHorsLigne();
       } else {
-        // Refus métier (stock insuffisant, limite de crédit, etc.) : grâce à
-        // la transaction unique, rien n'a été créé — pas de rattrapage à
-        // faire, juste informer.
-        setErreur(err instanceof Error ? err.message : "Vente refusée.");
+        setErreur(err instanceof Error ? err.message : "Erreur inattendue lors de la vente.");
       }
     }
 
-    // Retente 2 fois de plus avant d'abandonner (une coupure réseau très
-    // brève ne doit pas faire échouer toute la vente) — sûr ici car
-    // estErreurReseau ne couvre que les cas où la requête n'a jamais atteint
-    // le serveur, jamais une réponse d'erreur métier déjà reçue.
+    // Retente une insertion 2 fois de plus avant d'abandonner (une coupure
+    // réseau très brève ne doit pas faire échouer toute la vente).
     async function inserer<T>(fn: () => PromiseLike<T>): Promise<T> {
       let derniereErreur: any;
       for (let tentative = 0; tentative < 3; tentative++) {
@@ -272,14 +315,14 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           )}
         </div>
 
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] overflow-hidden">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card overflow-hidden">
           {lignes.length === 0 ? (
             <div className="p-8 text-center text-ink/45 text-xs italic flex flex-col items-center gap-2">
               <ShoppingBag size={22} className="text-ink/15" />
               Le panier est vide — recherchez un article ci-dessus
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+            <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
               <table className="w-full text-xs">
                 <thead className="bg-argent/10 text-ink/55 text-left">
                   <tr><th className="p-2.5">Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>
@@ -309,7 +352,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
       </div>
 
       <div className="space-y-3">
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card p-3">
           <label className="block text-[10px] uppercase tracking-wide text-ink/55 mb-1 font-semibold">
             Client (optionnel — requis si crédit)
           </label>
@@ -342,7 +385,7 @@ export default function CaisseForm({ articles, clients }: { articles: ArticleLit
           )}
         </div>
 
-        <div className="bg-white border border-argent/25 rounded-lg shadow-[0_1px_2px_rgba(8,48,120,0.05)] p-3 space-y-2">
+        <div className="bg-white border border-argent/25 rounded-lg shadow-card p-3 space-y-2">
           <label className="block text-[10px] uppercase tracking-wide text-ink/55 font-semibold">Mode(s) de paiement</label>
           {MODES.map((m) => (
             <div key={m.key} className="flex items-center justify-between text-xs">

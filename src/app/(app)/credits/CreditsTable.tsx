@@ -28,7 +28,7 @@ export default function CreditsTable({ credits }: { credits: VueCreditClient[] }
 
   return (
     <>
-      <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+      <div className="overflow-x-auto table-scroll-fade -mx-2 px-2 sm:mx-0 sm:px-0">
         <table className="w-full text-xs">
           <thead className="bg-argent/10 text-ink/55 text-left">
             <tr>
