@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import InstallBanner from "@/components/InstallBanner";
+import UpdateBanner from "@/components/UpdateBanner";
 import "./globals.css";
 
 const display = Space_Grotesk({
@@ -55,6 +57,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ServiceWorkerRegister />
         {children}
+        <InstallBanner />
+        <UpdateBanner />
       </body>
     </html>
   );
