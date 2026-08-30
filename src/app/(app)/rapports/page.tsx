@@ -20,7 +20,7 @@ export default async function RapportsPage() {
   debut12Mois.setDate(1);
   debut12Mois.setHours(0, 0, 0, 0);
 
-  const [{ data: ventes12Mois }, { data: paiements }, { data: clients }, { data: lignesVendues }] = await Promise.all([
+  const [{ data: ventes12Mois }, { data: paiements }, { data: clients }, { data: articlesStock }, { data: lignesVendues }] = await Promise.all([
     supabase
       .from("ventes")
       .select("id, date, montant_total, statut, client_id")
@@ -32,6 +32,14 @@ export default async function RapportsPage() {
       .gte("date", debut6Mois.toISOString())
       .neq("ventes.statut", "annulee"),
     supabase.from("clients").select("id"),
+    // Valeur du stock actuel (au prix de vente) — demande explicite du
+    // client : "chiffre d'affaires" dans sa bouche désigne en fait la
+    // valeur de la totalité des articles qu'il a en stock aujourd'hui, pas
+    // l'argent des ventes passées (déjà couvert par le CA ci-dessus). Prix
+    // de vente choisi plutôt que prix d'achat : ce dernier est un champ
+    // optionnel, souvent absent, alors que le prix de vente est toujours
+    // renseigné.
+    supabase.from("articles").select("quantite_stock, prix_vente").eq("actif", true),
     // Top produits (BR/FR n.a. — nouveau rapport, inspiré d'un autre projet) :
     // priorité au chiffre d'affaires généré, pas juste au nombre d'unités —
     // un article vendu en grande quantité mais bon marché n'est pas
@@ -129,7 +137,11 @@ export default async function RapportsPage() {
   const top7 = topProduits.slice(0, 7).map((p) => ({ nom: p.nom, ca: p.ca }));
   const maxCaTop = topProduits[0]?.ca ?? 0;
 
+  const valeurStock = (articlesStock ?? []).reduce((s, a) => s + a.quantite_stock * Number(a.prix_vente), 0);
+  const nbUnitesEnStock = (articlesStock ?? []).reduce((s, a) => s + a.quantite_stock, 0);
+
   const kpisEnsemble = [
+    { label: "Valeur du stock actuel (prix de vente)", valeur: valeurStock },
     { label: "CA total (6 mois)", valeur: caTotal },
     { label: "Nombre de ventes (6 mois)", valeur: toutesLesVentes6Mois.length },
     { label: "CA ce mois", valeur: caCeMois },
@@ -145,6 +157,18 @@ export default async function RapportsPage() {
       evolutionCA12Mois={evolutionCA12Mois}
       vueEnsemble={
         <div className="space-y-6">
+          <div className="bg-lime rounded-lg p-5 shadow-elevated text-white">
+            <div className="text-[11px] uppercase tracking-wide font-semibold text-white/70">
+              Valeur du stock actuel (au prix de vente)
+            </div>
+            <div className="text-3xl font-display font-bold num mt-1">
+              {valeurStock.toLocaleString("fr-FR")} <span className="text-lg font-normal text-white/70">FCFA</span>
+            </div>
+            <div className="text-xs text-white/60 mt-0.5">
+              {nbUnitesEnStock.toLocaleString("fr-FR")} unité(s) sur {articlesStock?.length ?? 0} article(s) actif(s)
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white border border-argent/25 rounded-lg p-4">
               <div className="text-[10px] uppercase tracking-wide text-ink/55">CA total (6 mois)</div>
