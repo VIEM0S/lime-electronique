@@ -9,6 +9,7 @@ import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import FactureApercu from "../caisse/FactureApercu";
 import { TELEPHONE_ENTREPRISE, partagerImageWhatsApp } from "@/lib/partage";
+import { telechargerCSV } from "@/lib/csv";
 import Pagination, { usePagination } from "@/components/ui/Pagination";
 import type { ModePaiement } from "@/types/database.types";
 
@@ -22,6 +23,8 @@ type Ligne = {
   total: number;
   statut: string;
 };
+
+const LABEL_TYPE: Record<Ligne["type"], string> = { vente: "Vente", remboursement: "Remboursement" };
 
 type DetailVente = {
   numero: string;
@@ -52,6 +55,25 @@ export default function FacturesClient({ lignes, peutAnnuler = false }: { lignes
     );
   }, [lignes, recherche]);
   const { page, setPage, totalPages, itemsPage: lignesPage } = usePagination(filtrees);
+
+  // Exporte tout ce qui correspond à la recherche en cours (toutes les
+  // pages), pas juste la page affichée — cohérent avec l'export CSV déjà
+  // en place sur Rapports.
+  function exporter() {
+    const horodatage = new Date().toISOString().slice(0, 10);
+    telechargerCSV(`lime-factures-${horodatage}.csv`, [
+      ["Type", "Référence", "Date", "Client", "Paiement", "Statut", "Total (FCFA)"],
+      ...filtrees.map((l) => [
+        LABEL_TYPE[l.type],
+        l.reference,
+        new Date(l.date).toLocaleString("fr-FR"),
+        l.clientNom,
+        l.paiement,
+        l.statut,
+        l.total,
+      ]),
+    ]);
+  }
 
   async function ouvrir(ligne: Ligne) {
     setLigneOuverte(ligne);
@@ -130,9 +152,14 @@ export default function FacturesClient({ lignes, peutAnnuler = false }: { lignes
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-lg font-display font-semibold text-ink">Factures</h1>
-        <p className="text-xs text-ink/55 italic">Ventes et paiements de créances — tout au même endroit</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-lg font-display font-semibold text-ink">Factures</h1>
+          <p className="text-xs text-ink/55 italic">Ventes et paiements de créances — tout au même endroit</p>
+        </div>
+        <Button size="sm" variant="secondary" onClick={exporter}>
+          <Download size={13} /> Export CSV
+        </Button>
       </div>
 
       <div className="relative">
