@@ -9,7 +9,7 @@ import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import FactureApercu from "../caisse/FactureApercu";
 import { TELEPHONE_ENTREPRISE, partagerImageWhatsApp } from "@/lib/partage";
-import { telechargerCSV } from "@/lib/csv";
+import { telechargerCSV, dateHeureCSV } from "@/lib/csv";
 import Pagination, { usePagination } from "@/components/ui/Pagination";
 import type { ModePaiement } from "@/types/database.types";
 
@@ -66,7 +66,7 @@ export default function FacturesClient({ lignes, peutAnnuler = false }: { lignes
       ...filtrees.map((l) => [
         LABEL_TYPE[l.type],
         l.reference,
-        new Date(l.date).toLocaleString("fr-FR"),
+        dateHeureCSV(l.date),
         l.clientNom,
         l.paiement,
         l.statut,
