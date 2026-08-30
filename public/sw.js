@@ -13,6 +13,19 @@
 // prévoir comme chantier séparé si le besoin devient critique.
 
 const CACHE_NAME = "lime-electronique-v1";
+const DELAI_RESEAU_MS = 10000;
+
+// Sur une connexion qui capte mal (terrain, réseau mobile instable), une
+// requête fetch() peut rester "en attente" sans jamais réussir NI échouer —
+// event.respondWith() reste alors bloqué en attente indéfiniment, ce qui
+// se traduit par un écran blanc côté utilisateur (rien à afficher tant que
+// la promesse n'est pas résolue). AbortController force l'abandon après un
+// délai raisonnable pour basculer sur le cache au lieu d'attendre à l'infini.
+function fetchAvecDelai(req, delaiMs = DELAI_RESEAU_MS) {
+  const controleur = new AbortController();
+  const minuteur = setTimeout(() => controleur.abort(), delaiMs);
+  return fetch(req, { signal: controleur.signal }).finally(() => clearTimeout(minuteur));
+}
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -37,7 +50,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    fetch(req)
+    fetchAvecDelai(req)
       .then((res) => {
         const copie = res.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(req, copie));
