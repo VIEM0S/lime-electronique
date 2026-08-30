@@ -37,10 +37,16 @@ export default async function DashboardPage() {
         .select("code_article, nom, quantite_stock")
         .lt("quantite_stock", SEUIL_STOCK_FAIBLE)
         .eq("actif", true),
+      // .neq("statut", "annulee") : annuler une vente en conflit ne lève pas
+      // le badge conflit_sync (ce n'est pas son rôle — cf. fix 011, annuler
+      // ne fait que corriger le stock) ; sans ce filtre, une vente déjà
+      // traitée par annulation continuerait à réclamer un arbitrage pour
+      // toujours.
       supabase
         .from("ventes")
         .select("id, numero_facture, date, montant_total")
-        .eq("conflit_sync", true),
+        .eq("conflit_sync", true)
+        .neq("statut", "annulee"),
       supabase
         .from("ventes")
         .select("date, montant_total")
